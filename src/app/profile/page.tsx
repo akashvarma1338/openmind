@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useUser, useFirestore, useDoc, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { Header } from '@/components/layout/header';
@@ -24,6 +25,13 @@ export default function ProfilePage() {
   }, [user, firestore]);
 
   const { data: userProfile, isLoading: isProfileLoading } = useDoc(userDocRef);
+
+  useEffect(() => {
+    // Only redirect if loading is complete and there is no user
+    if (!isUserLoading && !user) {
+      router.push('/auth');
+    }
+  }, [user, isUserLoading, router]);
 
   const handleSignOut = async () => {
     if (auth) {
@@ -53,21 +61,14 @@ export default function ProfilePage() {
     });
   };
 
-  if (isUserLoading || (user && isProfileLoading)) {
-    return <LoadingSpinner />;
-  }
-
-  if (!user) {
-    // Redirect to auth page if not logged in
-    if (typeof window !== 'undefined') {
-        router.push('/auth');
-    }
+  if (isUserLoading || !user) {
+    // Show a loading spinner while checking auth state or redirecting
     return <LoadingSpinner />;
   }
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header streak={0} onSignOut={handleSignOut} onHomeClick={handleHomeClick} />
+      <Header streak={0} onSignOut={handleSignOut} onHomeClick={handleHomeClick} onHistoryClick={() => {}} />
       <main className="flex-1 p-4 md:p-8">
         <div className="mx-auto max-w-2xl space-y-8">
             <Card>
@@ -76,10 +77,12 @@ export default function ProfilePage() {
                     <CardDescription>View and update your personal information.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    {userProfile ? (
+                    {isProfileLoading ? (
+                         <p>Loading profile...</p>
+                    ) : userProfile ? (
                         <ProfileForm userProfile={userProfile} onSubmit={handleProfileUpdate} />
                     ) : (
-                        <p>Loading profile...</p>
+                        <p>Could not load profile.</p>
                     )}
                 </CardContent>
             </Card>
