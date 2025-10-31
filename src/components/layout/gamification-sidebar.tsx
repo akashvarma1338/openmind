@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/table";
 import { Trophy, Flame } from "lucide-react";
 import { useUser, useFirestore, errorEmitter, FirestorePermissionError } from "@/firebase";
-import { collection, query, where, orderBy, limit, getDocs } from "firebase/firestore";
+import { collection, query, where, limit, getDocs } from "firebase/firestore";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Skeleton } from "../ui/skeleton";
 import { useEffect, useState } from "react";
@@ -46,19 +46,23 @@ export function GamificationSidebar({ userStreak, journeyTitle }: GamificationSi
 
     const buildLeaderboard = async () => {
         setIsLoading(true);
-        let pointsQuery;
         try {
-            pointsQuery = query(
+            const pointsQuery = query(
                 collection(firestore, 'curiosity_points'),
                 where('journeyTitle', '==', journeyTitle),
-                orderBy('streak', 'desc'),
-                limit(10)
+                limit(50) // Limit to a reasonable number for client-side sort
             );
 
             const querySnapshot = await getDocs(pointsQuery);
             const streaks = querySnapshot.docs.map(doc => ({ userId: doc.id, ...doc.data() } as { userId: string, userName: string, streak: number }));
             
-            const leaderboardData: LeaderboardUser[] = streaks.map((streakEntry, index) => ({
+            // Sort on the client
+            streaks.sort((a, b) => b.streak - a.streak);
+
+            // Get top 10 after sorting
+            const topStreaks = streaks.slice(0, 10);
+
+            const leaderboardData: LeaderboardUser[] = topStreaks.map((streakEntry, index) => ({
                 rank: index + 1,
                 userId: streakEntry.userId,
                 name: streakEntry.userName || "Anonymous",
