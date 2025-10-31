@@ -84,54 +84,51 @@ export default function Home() {
 
   useEffect(() => {
     if (isUserLoading || !user || !firestore) {
-      if (!isUserLoading) {
-        setIsLoading(false);
-      }
-      return;
-    };
-  
-    const loadJourney = async () => {
-      setIsLoading(true);
-      const pregenInterestsJSON = localStorage.getItem('pregeneratedJourneyInterests');
-      
-      if (pregenInterestsJSON) {
-        localStorage.removeItem('pregeneratedJourneyInterests');
-        const pregenInterests = JSON.parse(pregenInterestsJSON);
-        if (pregenInterests && pregenInterests.length > 0) {
-          await handleInterestsSubmit(pregenInterests);
-          return; // Exit after starting the new journey
+        if (!isUserLoading) {
+            setIsLoading(false);
         }
-      }
-  
-      // If no new journey, load the most recent one.
-      const journeysRef = collection(firestore, "users", user.uid, "learning_journeys");
-      const q = query(journeysRef, orderBy("startDate", "desc"), limit(1));
-      const querySnapshot = await getDocs(q);
-      
-      if (!querySnapshot.empty) {
-        const journeyDoc = querySnapshot.docs[0];
-        const journeyData = { id: journeyDoc.id, ...journeyDoc.data() } as Journey;
-  
-        const topicsRef = collection(firestore, "users", user.uid, "learning_journeys", journeyData.id, "topics");
-        const topicsQuery = query(topicsRef, orderBy("day", "desc"), limit(1));
-        const topicsSnapshot = await getDocs(topicsQuery);
-  
-        if (!topicsSnapshot.empty) {
-          const topicDoc = topicsSnapshot.docs[0];
-          const topicData = { id: topicDoc.id, ...topicDoc.data() } as Topic;
-          setJourneyState({ journey: journeyData, currentTopic: topicData });
+        return;
+    }
+
+    const processJourney = async () => {
+        setIsLoading(true);
+        const pregenInterestsJSON = localStorage.getItem('pregeneratedJourneyInterests');
+
+        if (pregenInterestsJSON) {
+            localStorage.removeItem('pregeneratedJourneyInterests');
+            const pregenInterests = JSON.parse(pregenInterestsJSON);
+            await handleInterestsSubmit(pregenInterests);
         } else {
-          setJourneyState({ journey: journeyData, currentTopic: null });
+            // If no new journey, load the most recent one.
+            const journeysRef = collection(firestore, "users", user.uid, "learning_journeys");
+            const q = query(journeysRef, orderBy("startDate", "desc"), limit(1));
+            const querySnapshot = await getDocs(q);
+
+            if (!querySnapshot.empty) {
+                const journeyDoc = querySnapshot.docs[0];
+                const journeyData = { id: journeyDoc.id, ...journeyDoc.data() } as Journey;
+
+                const topicsRef = collection(firestore, "users", user.uid, "learning_journeys", journeyData.id, "topics");
+                const topicsQuery = query(topicsRef, orderBy("day", "desc"), limit(1));
+                const topicsSnapshot = await getDocs(topicsQuery);
+
+                if (!topicsSnapshot.empty) {
+                    const topicDoc = topicsSnapshot.docs[0];
+                    const topicData = { id: topicDoc.id, ...topicDoc.data() } as Topic;
+                    setJourneyState({ journey: journeyData, currentTopic: topicData });
+                } else {
+                    setJourneyState({ journey: journeyData, currentTopic: null });
+                }
+            } else {
+                setJourneyState(null); // No journeys exist
+            }
+            setIsLoading(false);
         }
-      } else {
-        setJourneyState(null); // No journeys exist
-      }
-      setIsLoading(false);
     };
-  
-    loadJourney();
-  
-  }, [isUserLoading, user, firestore]);
+
+    processJourney();
+
+}, [isUserLoading, user, firestore]);
 
   const startNewJourney = () => {
     setInterests([]);
