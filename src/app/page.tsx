@@ -339,7 +339,11 @@ export default function Home() {
     return <LoadingSpinner />;
   }
 
-  if (!user) {
+  if (!user || !userProfile) {
+    // Also wait for userProfile to be loaded before rendering anything that depends on it.
+    if (isUserLoading) {
+        return <LoadingSpinner />;
+    }
     return <AuthPage />;
   }
 
