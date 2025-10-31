@@ -7,6 +7,5 @@ export type LeaderboardEntry = {
 
 // This file is used to generate a mock leaderboard.
 export const leaderboardData: Omit<LeaderboardEntry, 'rank'>[] = [
-  { name: 'Surendra', points: 1250 },
-  { name: 'LearnerTwo', points: 950 },
+  { name: 'user1', points: 90 },
 ];
