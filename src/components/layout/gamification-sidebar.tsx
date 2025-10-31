@@ -1,4 +1,5 @@
 
+
 import {
   Card,
   CardContent,
@@ -20,6 +21,8 @@ import { collection, collectionGroup, query, where, orderBy, limit, getDocs } fr
 import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Skeleton } from "../ui/skeleton";
+import { errorEmitter } from "@/firebase/error-emitter";
+import { FirestorePermissionError } from "@/firebase/errors";
 
 type GamificationSidebarProps = {
   userStreak: number;
@@ -101,7 +104,11 @@ export function GamificationSidebar({ userStreak, journeyTitle }: GamificationSi
 
             setLeaderboard(rankedList);
         } catch (error) {
-            console.error("Error fetching leaderboard streaks:", error);
+            const contextualError = new FirestorePermissionError({
+              operation: 'list',
+              path: (pointsQuery as any)._query.path.canonicalString(), // This is an internal API but necessary here
+            });
+            errorEmitter.emit('permission-error', contextualError);
             setLeaderboard([]);
         } finally {
             setIsLoading(false);
