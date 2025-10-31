@@ -47,14 +47,13 @@ service cloud.firestore {
         }
     }
 
-    // Rules for the curiosity_points collection
+    // A user can get or write to their own document in the curiosity_points collection.
     match /curiosity_points/{userId} {
-      // A user can get or write to their own document
       allow get, write: if request.auth.uid == userId;
     }
 
+    // Any signed-in user can list the entire curiosity_points collection for the leaderboard.
     match /curiosity_points {
-        // Any signed-in user can list the collection for the leaderboard
         allow list: if isSignedIn();
     }
   }
