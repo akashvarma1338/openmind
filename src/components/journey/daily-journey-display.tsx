@@ -78,7 +78,7 @@ export function DailyJourneyDisplay({
                 <div key={index} className="space-y-2">
                   <h3 className="font-semibold text-lg">{article.title}</h3>
                   <p className="text-muted-foreground leading-relaxed">
-                    {article.concept}
+                    {article.explanation}
                   </p>
                   <a
                     href={article.link}

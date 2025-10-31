@@ -60,10 +60,10 @@ export default function Home() {
       setDailyTopic(topic);
       setPoints((p) => p + 10);
 
-      const material = await curateReadingMaterial({ topic: topic.topic });
+      const material = await curateReadingMaterial({ topic: topic.topic, interests: submittedInterests });
       setReadingMaterial(material);
 
-      const fullText = material.articles.map(a => `${a.title}\n${a.concept}`).join("\n\n");
+      const fullText = material.articles.map(a => `${a.title}\n${a.explanation}`).join("\n\n");
       const quizData = await buildMicroQuiz({
         topic: topic.topic,
         readingMaterial: fullText,

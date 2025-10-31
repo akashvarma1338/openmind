@@ -13,6 +13,7 @@ import {z} from 'genkit';
 
 const CurateReadingMaterialInputSchema = z.object({
   topic: z.string().describe('The daily learning topic.'),
+  interests: z.array(z.string()).describe('A list of user interests to tailor the explanation (e.g., movies, short stories).'),
 });
 
 export type CurateReadingMaterialInput = z.infer<typeof CurateReadingMaterialInputSchema>;
@@ -22,9 +23,9 @@ const CurateReadingMaterialOutputSchema = z.object({
     .array(
       z.object({
         title: z.string().describe('The title of the article or resource.'),
-        concept: z
+        explanation: z
           .string()
-          .describe('A brief summary or concept of the reading material.'),
+          .describe('An explanation of the core concept from the article, tailored to the user\'s interests with an analogy.'),
         link: z.string().url().describe('The URL to the article or resource.'),
       })
     )
@@ -41,12 +42,18 @@ const prompt = ai.definePrompt({
   name: 'curateReadingMaterialPrompt',
   input: {schema: CurateReadingMaterialInputSchema},
   output: {schema: CurateReadingMaterialOutputSchema},
-  prompt: `You are an AI assistant that helps users find relevant articles and resources for a given learning topic.
+  prompt: `You are an AI learning companion that excels at making complex topics understandable and engaging.
+
+  Your task is to find relevant articles for a learning topic. For each article, you must analyze its core concept and then explain that concept using a creative analogy based on the user's interests.
 
   Topic: {{{topic}}}
+  User Interests:
+  {{#each interests}}- {{this}}\n{{/each}}
 
-  Please provide a list of articles and resources that would be helpful for learning about this topic.
-  For each resource, provide a title, a short concept summary, and a valid URL.`,
+  For each resource, provide:
+  1.  A title.
+  2.  An "explanation" that simplifies the main idea with an analogy related to their interests (e.g., movies, short stories, history).
+  3.  A valid URL.`,
 });
 
 const curateReadingMaterialFlow = ai.defineFlow(
