@@ -27,6 +27,8 @@ import { collection, doc, Timestamp, query, orderBy, limit, getDocs, serverTimes
 import { LoadingSpinner } from "@/components/common/loading-spinner";
 import { JourneyHistorySidebar } from "@/components/layout/journey-history-sidebar";
 import { useToast } from "@/hooks/use-toast";
+import { ConfettiCelebration } from "@/components/journey/confetti-celebration";
+
 
 type Journey = {
   id: string;
@@ -64,6 +66,7 @@ export default function Home() {
   const [interests, setInterests] = useState<string[]>([]);
   const [journeyState, setJourneyState] = useState<JourneyState | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
   
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
@@ -89,9 +92,29 @@ export default function Home() {
   const { data: userStreakDoc } = useDoc<{streak: number, timestamp: Timestamp}>(userStreakRef);
   const streak = userStreakDoc?.streak ?? 0;
 
+  // Effect to check for pre-generated journey start
+  useEffect(() => {
+    if (isUserLoading) return; // Wait until user is loaded
+    const pregenInterestsJSON = localStorage.getItem('pregeneratedJourneyInterests');
+    if (pregenInterestsJSON) {
+        const pregenInterests = JSON.parse(pregenInterestsJSON);
+        localStorage.removeItem('pregeneratedJourneyInterests'); // Clear it after reading
+        if (pregenInterests && pregenInterests.length > 0) {
+            handleInterestsSubmit(pregenInterests);
+        }
+    }
+  }, [isUserLoading]); // Re-run when user loading state changes
+
+
   // Effect to load the most recent journey
   useEffect(() => {
     if (!journeysRef || !user) return;
+
+    // Check if a journey is being started from another page
+    const pregenInterestsJSON = localStorage.getItem('pregeneratedJourneyInterests');
+    if (pregenInterestsJSON) {
+        return; // Don't load most recent if we are about to start a new one
+    }
 
     const loadMostRecentJourney = async () => {
       setIsLoading(true);
@@ -286,6 +309,10 @@ export default function Home() {
     if (!firestore || !user || !journeyState || !journeyState.journey || !journeyState.currentTopic) return;
     const score = (correctAnswers / totalQuestions) * 100;
     
+    if (score >= 80) {
+        setShowConfetti(true);
+    }
+    
     const topicRef = doc(firestore, "users", user.uid, "learning_journeys", journeyState.journey.id, "topics", journeyState.currentTopic.id);
     setDocumentNonBlocking(topicRef, { quizScore: score }, { merge: true });
 
@@ -403,14 +430,15 @@ export default function Home() {
   
   return (
     <div className="flex flex-col min-h-screen">
+      <ConfettiCelebration active={showConfetti} onComplete={() => setShowConfetti(false)} />
       <Header streak={streak} onSignOut={handleSignOut} onHomeClick={startNewJourney} />
       <main className="flex-1 p-4 md:p-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
-            <div className="lg:col-span-3 space-y-8">
+            <div className="lg:col-span-2 space-y-8">
                 {renderJourneyContent()}
             </div>
             <aside className="space-y-8 lg:block hidden">
-                {user && journeyState?.journey && (
+                {user && (
                     <>
                         <JourneyHistorySidebar user={user} onSelectJourney={handleSelectJourney} />
                     </>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import type { BuildMicroQuizOutput } from "@/ai/flows/build-micro-quiz";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,7 +16,6 @@ import { Label } from "@/components/ui/label";
 import { CheckCircle, XCircle, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
-import Confetti from "react-confetti";
 
 type QuizQuestion = BuildMicroQuizOutput["quiz"][0];
 
@@ -31,19 +30,6 @@ export function MicroQuiz({ quiz, onSubmit, score }: MicroQuizProps) {
     Array(quiz.length).fill(null)
   );
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [showConfetti, setShowConfetti] = useState(false);
-  const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const handleResize = () => {
-        setWindowSize({ width: window.innerWidth, height: window.innerHeight });
-      };
-      window.addEventListener("resize", handleResize);
-      handleResize();
-      return () => window.removeEventListener("resize", handleResize);
-    }
-  }, []);
 
   const handleAnswerChange = (questionIndex: number, answerIndex: number) => {
     const newAnswers = [...selectedAnswers];
@@ -57,12 +43,8 @@ export function MicroQuiz({ quiz, onSubmit, score }: MicroQuizProps) {
         count + (selectedAnswers[index] === question.correctAnswerIndex ? 1 : 0)
       );
     }, 0);
-    const calculatedScore = (correctCount / quiz.length) * 100;
     onSubmit(correctCount, quiz.length);
     setIsSubmitted(true);
-    if (calculatedScore >= 80) {
-      setShowConfetti(true);
-    }
   };
 
   if (isSubmitted && score !== null) {
@@ -75,15 +57,6 @@ export function MicroQuiz({ quiz, onSubmit, score }: MicroQuizProps) {
 
     return (
       <Card className="border-accent relative overflow-hidden">
-        {showConfetti && (
-          <Confetti
-            width={windowSize.width}
-            height={windowSize.height}
-            recycle={false}
-            numberOfPieces={400}
-            onConfettiComplete={() => setShowConfetti(false)}
-          />
-        )}
         <CardHeader>
           <CardTitle>Quiz Results</CardTitle>
           <CardDescription>
