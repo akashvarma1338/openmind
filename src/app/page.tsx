@@ -69,6 +69,12 @@ export default function Home() {
   const auth = useAuth();
   const firestore = useFirestore();
   
+  const userProfileRef = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
+    return doc(firestore, "users", user.uid);
+  }, [user, firestore]);
+  const { data: userProfile } = useDoc<{name: string}>(userProfileRef);
+
   const journeysRef = useMemoFirebase(() => {
     if (!user || !firestore) return null;
     return collection(firestore, "users", user.uid, "learning_journeys");
@@ -119,7 +125,7 @@ export default function Home() {
   };
   
   const handleInterestsSubmit = async (submittedInterests: string[]) => {
-    if (isLoading || !user || !firestore) return;
+    if (isLoading || !user || !firestore || !userProfile) return;
     setIsLoading(true);
     setInterests(submittedInterests);
     setJourneyState(null); // Clear previous journey state
@@ -168,7 +174,7 @@ export default function Home() {
       const streakDocRef = doc(firestore, 'curiosity_points', user.uid);
       batch.set(streakDocRef, {
         userId: user.uid,
-        userName: user.displayName, // Denormalize user name
+        userName: userProfile.name, // Denormalize user name
         streak: 1,
         timestamp: serverTimestamp()
       }, { merge: true });
@@ -188,7 +194,7 @@ export default function Home() {
   };
 
   const advanceToNextDay = async () => {
-    if (!journeyState || !journeyState.journey || isLoading || !user || !firestore) return;
+    if (!journeyState || !journeyState.journey || isLoading || !user || !firestore || !userProfile) return;
 
     setIsLoading(true);
     try {
@@ -240,7 +246,7 @@ export default function Home() {
         batch.set(streakDocRef, {
           streak: newStreak,
           timestamp: now,
-          userName: user.displayName, // Keep denormalized name up-to-date
+          userName: userProfile.name, // Keep denormalized name up-to-date
         }, { merge: true });
       }
       
@@ -395,3 +401,5 @@ export default function Home() {
     </div>
   );
 }
+
+    
