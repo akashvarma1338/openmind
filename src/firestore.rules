@@ -1,40 +1,4 @@
 
-/**
- * @fileoverview Firestore Security Rules for OpenMind.
- *
- * Core Philosophy:
- * This ruleset enforces a strict user-ownership model for all user-specific data,
- * ensuring that only the authenticated user can read and write their own data.
- * This model is extended hierarchically to learning journeys, topics, and quizzes
- * nested under each user. Curiosity points are managed on a per-user basis, but
- * are listable by any authenticated user for leaderboard purposes.
- *
- * Data Structure:
- * - /users/{userId}: Stores user profile information.
- * - /users/{userId}/learning_journeys/{journeyId}: Stores learning journeys for each user.
- * - /users/{userId}/learning_journeys/{journeyId}/topics/{topicId}: Stores topics within a learning journey.
- * - /users/{userId}/learning_journeys/{journeyId}/topics/{topicId}/quizzes/{quizId}: Stores quizzes for each topic.
- * - /curiosity_points/{userId}: Stores curiosity points for each user.
- *
- * Key Security Decisions:
- * - User data is private and only accessible to the authenticated user.
- * - Listing of users is not permitted to prevent enumeration.
- * - Data model uses path-based ownership, where the document path determines ownership.
- * - Write validation is limited to checking the consistency of user IDs in paths and documents.
- * - The `curiosity_points` collection is readable by any authenticated user to enable leaderboards.
- *
- * Denormalization for Authorization:
- * This ruleset relies on path-based ownership and avoids the need for `get()` calls by
- * enforcing that user-specific data is stored under the /users/{userId} path. This
- * ensures that authorization can be determined directly from the path without
- * additional reads.
- *
- * Structural Segregation:
- * All user-specific data is stored under the /users/{userId} collection, ensuring
- * that there is a clear separation between user-specific data and any potentially
- * public data. This segregation simplifies the security rules and ensures that
- * user data is always protected.
- */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -43,93 +7,54 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    /**
-     * @description Manages user profile information. Only the authenticated user can read and write their own profile.
-     * @path /users/{userId}
-     * @allow (get) User 'user123' can get their own profile.
-     * @allow (create) User 'user123' can create their own profile if authenticated.
-     * @deny (get) User 'user456' cannot get 'user123' profile.
-     * @deny (update) User 'user456' cannot update 'user123' profile.
-     * @principle Enforces document ownership for reads and writes.
-     */
     match /users/{userId} {
-      function isOwner(userId) {
+      function isOwner() {
         return request.auth.uid == userId;
       }
 
-      allow get: if isOwner(userId);
-      allow list: if false; // Prevent user enumeration
+      allow get: if isOwner();
+      allow list: if false;
 
-      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isSignedIn() && isOwner(userId) && request.resource.data.id == userId; // Enforce immutability of user ID
-      allow delete: if isSignedIn() && isOwner(userId) && resource != null;
+      allow create: if isSignedIn() && isOwner() && request.resource.data.id == userId;
+      allow update: if isSignedIn() && isOwner() && request.resource.data.id == userId;
+      allow delete: if isSignedIn() && isOwner() && resource != null;
 
-        /**
-         * @description Manages learning journeys for each user. Only the authenticated user can read and write their own learning journeys.
-         * @path /users/{userId}/learning_journeys/{journeyId}
-         * @allow (get) User 'user123' can get their own learning journey 'journey456'.
-         * @allow (create) User 'user123' can create a new learning journey under their profile.
-         * @deny (get) User 'user456' cannot get 'user123' learning journey.
-         * @deny (update) User 'user456' cannot update 'user123' learning journey.
-         * @principle Enforces document ownership for reads and writes, extending user-ownership model.
-         */
         match /learning_journeys/{journeyId} {
-          allow get: if isOwner(userId);
-          allow list: if isOwner(userId);
+          allow get: if isOwner();
+          allow list: if isOwner();
 
-          allow create: if isSignedIn() && isOwner(userId);
-          allow update: if isSignedIn() && isOwner(userId) && resource != null;
-          allow delete: if isSignedIn() && isOwner(userId) && resource != null;
+          allow create: if isSignedIn() && isOwner();
+          allow update: if isSignedIn() && isOwner() && resource != null;
+          allow delete: if isSignedIn() && isOwner() && resource != null;
 
-            /**
-             * @description Manages topics within a learning journey. Only the authenticated user can read and write topics under their learning journeys.
-             * @path /users/{userId}/learning_journeys/{journeyId}/topics/{topicId}
-             * @allow (get) User 'user123' can get topic 'topic789' within their learning journey.
-             * @allow (create) User 'user123' can create a new topic within their learning journey.
-             * @deny (get) User 'user456' cannot get a topic from 'user123' learning journey.
-             * @deny (update) User 'user456' cannot update a topic from 'user123' learning journey.
-             * @principle Enforces document ownership for reads and writes, extending user-ownership model.
-             */
             match /topics/{topicId} {
-              allow get: if isOwner(userId);
-              allow list: if isOwner(userId);
+              allow get: if isOwner();
+              allow list: if isOwner();
 
-              allow create: if isSignedIn() && isOwner(userId);
-              allow update: if isSignedIn() && isOwner(userId) && resource != null;
-              allow delete: if isSignedIn() && isOwner(userId) && resource != null;
+              allow create: if isSignedIn() && isOwner();
+              allow update: if isSignedIn() && isOwner() && resource != null;
+              allow delete: if isSignedIn() && isOwner() && resource != null;
 
-                /**
-                 * @description Manages quizzes for each topic within a learning journey. Only the authenticated user can read and write quizzes under their topics.
-                 * @path /users/{userId}/learning_journeys/{journeyId}/topics/{topicId}/quizzes/{quizId}
-                 * @allow (get) User 'user123' can get quiz 'quiz012' within their topic.
-                 * @allow (create) User 'user123' can create a new quiz within their topic.
-                 * @deny (get) User 'user456' cannot get a quiz from 'user123' learning journey.
-                 * @deny (update) User 'user456' cannot update a quiz from 'user123' learning journey.
-                 * @principle Enforces document ownership for reads and writes, extending user-ownership model.
-                 */
                 match /quizzes/{quizId} {
-                  allow get: if isOwner(userId);
-                  allow list: if isOwner(userId);
+                  allow get: if isOwner();
+                  allow list: if isOwner();
 
-                  allow create: if isSignedIn() && isOwner(userId);
-                  allow update: if isSignedIn() && isOwner(userId) && resource != null;
-                  allow delete: if isSignedIn() && isOwner(userId) && resource != null;
+                  allow create: if isSignedIn() && isOwner();
+                  allow update: if isSignedIn() && isOwner() && resource != null;
+                  allow delete: if isSignedIn() && isOwner() && resource != null;
                 }
             }
         }
     }
 
-    /**
-     * @description Manages curiosity points for leaderboards.
-     * Any authenticated user can list the points collection for the leaderboard.
-     * A user can only get, create, or update their own points document.
-     */
+    // Rules for the curiosity_points collection
     match /curiosity_points/{userId} {
-        allow get: if isSignedIn() && request.auth.uid == userId;
-        allow write: if isSignedIn() && request.auth.uid == userId;
+      // A user can get or write to their own document
+      allow get, write: if request.auth.uid == userId;
     }
 
     match /curiosity_points {
+        // Any signed-in user can list the collection for the leaderboard
         allow list: if isSignedIn();
     }
   }
