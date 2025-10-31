@@ -64,6 +64,10 @@
           "type": "string",
           "description": "The display name of the user (denormalized)."
         },
+        "journeyTitle": {
+            "type": "string",
+            "description": "The title of the learning journey the user is on (denormalized)."
+        },
         "streak": {
           "type": "number",
           "description": "The user's current daily streak."
@@ -74,7 +78,7 @@
           "description": "The timestamp of the last streak update."
         }
       },
-      "required": ["userId", "userName", "streak", "timestamp"]
+      "required": ["userId", "userName", "streak", "timestamp", "journeyTitle"]
     }
   },
   "auth": {
@@ -193,3 +197,5 @@
     "reasoning": "This Firestore structure is designed to support the Curiosity Engine application, focusing on a secure, scalable, and debuggable data model that prioritizes authorization independence. User data is stored under `/users/{userId}`, ensuring path-based ownership for private data. Learning journeys, topics, and quizzes are nested under each user, maintaining a clear hierarchical structure. The `curiosity_points` collection implements a membership model for leaderboard participation. This design eliminates the need for `get()` calls in security rules, enabling atomic operations and easy debugging. Segregation ensures each collection has a homogeneous security posture, simplifying rule creation. The denormalized data provides authorization independence, allowing secure list operations, and ensures the integrity of the application's data. Explicit state modeling uses a single `status` field for learning journey states."
   }
 }
+
+    

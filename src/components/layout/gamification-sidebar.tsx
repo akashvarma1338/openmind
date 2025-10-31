@@ -1,5 +1,6 @@
 
 
+
 import {
   Card,
   CardContent,
@@ -16,13 +17,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Trophy, Flame } from "lucide-react";
-import { useUser, useFirestore } from "@/firebase";
-import { collection, collectionGroup, query, where, orderBy, limit, getDocs } from "firebase/firestore";
-import { useEffect, useState } from "react";
+import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
+import { collection, query, where, orderBy, limit } from "firebase/firestore";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Skeleton } from "../ui/skeleton";
-import { errorEmitter } from "@/firebase/error-emitter";
-import { FirestorePermissionError } from "@/firebase/errors";
 
 type GamificationSidebarProps = {
   userStreak: number;
@@ -39,80 +37,29 @@ type LeaderboardUser = {
 export function GamificationSidebar({ userStreak, journeyTitle }: GamificationSidebarProps) {
   const { user } = useUser();
   const firestore = useFirestore();
-  const [leaderboard, setLeaderboard] = useState<LeaderboardUser[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    const buildLeaderboard = async () => {
-      if (!firestore || !journeyTitle) {
-        setLeaderboard([]);
-        setIsLoading(false);
-        return;
-      }
-
-      setIsLoading(true);
-
-      try {
-        // Step 1: Find all journey documents that match the current journey title
-        const journeysQuery = query(
-          collectionGroup(firestore, 'learning_journeys'),
-          where('title', '==', journeyTitle)
-        );
-        const journeysSnapshot = await getDocs(journeysQuery);
-        const journeys = journeysSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() as object, _path: { segments: doc.ref.path.split('/') } }));
-
-        if (journeys.length === 0) {
-          setLeaderboard([]);
-          setIsLoading(false);
-          return;
-        }
-
-        const userIds = journeys.map(j => j._path.segments[1]).filter(Boolean);
-        if (userIds.length === 0) {
-          setLeaderboard([]);
-          setIsLoading(false);
-          return;
-        }
-
-        // Step 2: Use the user IDs from those journeys to query the `curiosity_points` collection
-        const pointsQuery = query(
-          collection(firestore, 'curiosity_points'),
-          where('userId', 'in', userIds.slice(0, 30)), // Firestore 'in' query limit is 30
-          orderBy('streak', 'desc'),
-          limit(10)
-        );
-
-        const streakSnapshot = await getDocs(pointsQuery);
-        const streaks = streakSnapshot.docs.map(doc => doc.data() as { userId: string, userName: string, streak: number });
-
-        const rankedList = streaks
-          .map((streakEntry, index) => ({
-            rank: index + 1,
-            id: streakEntry.userId,
-            name: streakEntry.userName || "Anonymous",
-            streak: streakEntry.streak,
-          }))
-          .sort((a, b) => b.streak - a.streak)
-          .map((user, index) => ({ ...user, rank: index + 1 }));
-
-        setLeaderboard(rankedList);
-
-      } catch (error) {
-        if (error instanceof Error && 'code' in error && (error as any).code === 'permission-denied') {
-            const contextualError = new FirestorePermissionError({
-              operation: 'list',
-              path: `learning_journeys where title == ${journeyTitle}`, 
-            });
-            errorEmitter.emit('permission-error', contextualError);
-        }
-        setLeaderboard([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    buildLeaderboard();
+  const pointsQuery = useMemoFirebase(() => {
+    if (!firestore || !journeyTitle) {
+      return null;
+    }
+    // Query the `curiosity_points` collection directly, filtering by the denormalized journeyTitle
+    return query(
+      collection(firestore, 'curiosity_points'),
+      where('journeyTitle', '==', journeyTitle),
+      orderBy('streak', 'desc'),
+      limit(10)
+    );
   }, [firestore, journeyTitle]);
+
+  const { data: streaks, isLoading } = useCollection<{ userId: string, userName: string, streak: number }>(pointsQuery);
+
+  const leaderboard: LeaderboardUser[] = (streaks || [])
+    .map((streakEntry, index) => ({
+      rank: index + 1,
+      id: streakEntry.userId,
+      name: streakEntry.userName || "Anonymous",
+      streak: streakEntry.streak,
+    }));
   
   return (
     <Card>
@@ -174,3 +121,5 @@ export function GamificationSidebar({ userStreak, journeyTitle }: GamificationSi
     </Card>
   );
 }
+
+    

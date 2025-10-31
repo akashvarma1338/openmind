@@ -101,16 +101,18 @@ export default function Home() {
         const journeyDoc = querySnapshot.docs[0];
         const journeyData = { id: journeyDoc.id, ...journeyDoc.data() } as Journey;
 
-        const topicsRef = collection(firestore, "users", user.uid, "learning_journeys", journeyData.id, "topics");
-        const topicsQuery = query(topicsRef, orderBy("day", "desc"), limit(1));
-        const topicsSnapshot = await getDocs(topicsQuery);
+        if (firestore && user) {
+            const topicsRef = collection(firestore, "users", user.uid, "learning_journeys", journeyData.id, "topics");
+            const topicsQuery = query(topicsRef, orderBy("day", "desc"), limit(1));
+            const topicsSnapshot = await getDocs(topicsQuery);
 
-        if (!topicsSnapshot.empty) {
-            const topicDoc = topicsSnapshot.docs[0];
-            const topicData = { id: topicDoc.id, ...topicDoc.data() } as Topic;
-            setJourneyState({ journey: journeyData, currentTopic: topicData });
-        } else {
-             setJourneyState({ journey: journeyData, currentTopic: null });
+            if (!topicsSnapshot.empty) {
+                const topicDoc = topicsSnapshot.docs[0];
+                const topicData = { id: topicDoc.id, ...topicDoc.data() } as Topic;
+                setJourneyState({ journey: journeyData, currentTopic: topicData });
+            } else {
+                setJourneyState({ journey: journeyData, currentTopic: null });
+            }
         }
       }
       setIsLoading(false);
@@ -136,7 +138,8 @@ export default function Home() {
       const batch = writeBatch(firestore);
 
       // Create new journey
-      const newJourneyRef = doc(journeysRef!);
+      const journeysCollectionRef = collection(firestore, "users", user.uid, "learning_journeys");
+      const newJourneyRef = doc(journeysCollectionRef);
       const newJourney: Omit<Journey, 'id'> = {
         title: firstTopicAI.journeyTitle,
         startDate: Timestamp.now(),
@@ -176,7 +179,8 @@ export default function Home() {
         userId: user.uid,
         userName: userProfile.name, // Denormalize user name
         streak: 1,
-        timestamp: serverTimestamp()
+        timestamp: serverTimestamp(),
+        journeyTitle: firstTopicAI.journeyTitle, // Denormalize journey title
       }, { merge: true });
       
       await batch.commit();
@@ -247,6 +251,7 @@ export default function Home() {
           streak: newStreak,
           timestamp: now,
           userName: userProfile.name, // Keep denormalized name up-to-date
+          journeyTitle: journey.title, // Keep denormalized journey title up-to-date
         }, { merge: true });
       }
       
