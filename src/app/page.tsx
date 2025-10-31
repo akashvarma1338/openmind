@@ -18,12 +18,12 @@ import {
   buildMicroQuiz,
   type BuildMicroQuizOutput,
 } from "@/ai/flows/build-micro-quiz";
-import { useUser, useAuth, useDoc, useMemoFirebase, updateDocumentNonBlocking, useFirestore } from "@/firebase";
+import { useUser, useAuth, addDocumentNonBlocking, useFirestore } from "@/firebase";
 import AuthPage from "@/app/auth/page";
 import { signOut } from "firebase/auth";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ArrowRight } from "lucide-react";
-import { doc } from "firebase/firestore";
+import { collection, doc } from "firebase/firestore";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
 
 type JourneyState = {
@@ -36,39 +36,15 @@ type JourneyState = {
   isCompleted: boolean;
 };
 
-type UserProfile = {
-    name: string;
-    age: number;
-    contact: string;
-    email: string;
-    id: string;
-    streak: number;
-    level: 'Beginner' | 'Intermediate' | 'Advanced';
-}
-
 export default function Home() {
   const [interests, setInterests] = useState<string[]>([]);
   const [journeyState, setJourneyState] = useState<JourneyState | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [points, setPoints] = useState(0);
 
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
   const firestore = useFirestore();
-
-  const userProfileRef = useMemoFirebase(() => {
-    if (firestore && user) {
-        return doc(firestore, "users", user.uid);
-    }
-    return null;
-  }, [firestore, user]);
-
-  const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
-
-  const getLevel = (streak: number) => {
-    if (streak > 10) return 'Advanced';
-    if (streak > 5) return 'Intermediate';
-    return 'Beginner';
-  };
 
   const startNewJourney = () => {
     setInterests([]);
@@ -93,17 +69,28 @@ export default function Home() {
   };
   
   const handleInterestsSubmit = async (submittedInterests: string[]) => {
-    if (isLoading || !userProfile || !userProfileRef) return;
-
+    if (isLoading || !firestore) return;
     setIsLoading(true);
     setInterests(submittedInterests);
-    setJourneyState(null);
+    setJourneyState(null); // Clear previous journey state
 
     try {
+      // Generate the first topic of a new journey
       const firstTopic = await generateDailyTopic({ interests: submittedInterests });
       
-      const newStreak = userProfile.streak + 1;
-      updateDocumentNonBlocking(userProfileRef, { streak: newStreak, level: getLevel(newStreak) });
+      // Award points for starting
+      const initialPoints = 10;
+      setPoints(initialPoints);
+      
+      if(user) {
+        const pointsCollection = collection(firestore, 'curiosity_points');
+        await addDocumentNonBlocking(pointsCollection, {
+          userId: user.uid,
+          points: initialPoints,
+          timestamp: new Date()
+        });
+      }
+
 
       setJourneyState({
         journeyTitle: firstTopic.journeyTitle,
@@ -124,7 +111,7 @@ export default function Home() {
   };
 
   const advanceToNextDay = async () => {
-    if (!journeyState || !journeyState.journeyTitle || isLoading || !userProfile || !userProfileRef) return;
+    if (!journeyState || !journeyState.journeyTitle || isLoading || !firestore) return;
 
     setIsLoading(true);
     try {
@@ -132,8 +119,19 @@ export default function Home() {
         interests,
         journeyTitle: journeyState.journeyTitle,
       });
-      const newStreak = userProfile.streak + 1;
-      updateDocumentNonBlocking(userProfileRef, { streak: newStreak, level: getLevel(newStreak) });
+
+      const dailyPoints = 10;
+      setPoints(prev => prev + dailyPoints);
+
+      if(user) {
+        const pointsCollection = collection(firestore, 'curiosity_points');
+        await addDocumentNonBlocking(pointsCollection, {
+          userId: user.uid,
+          points: dailyPoints,
+          timestamp: new Date()
+        });
+      }
+
       
       setJourneyState(prev => ({
         ...prev!,
@@ -154,9 +152,21 @@ export default function Home() {
     correctAnswers: number,
     totalQuestions: number
   ) => {
+    if (!firestore) return;
     const score = (correctAnswers / totalQuestions) * 100;
+    const earnedPoints = correctAnswers * 5; // 5 points per correct answer
+    setPoints(prev => prev + earnedPoints);
     setJourneyState(prev => ({...prev!, quizScore: score}));
-    // Points are now derived from streak
+
+    if(user) {
+        const pointsCollection = collection(firestore, 'curiosity_points');
+        addDocumentNonBlocking(pointsCollection, {
+          userId: user.uid,
+          points: earnedPoints,
+          quizScore: score,
+          timestamp: new Date()
+        });
+    }
   };
   
   const handleSignOut = async () => {
@@ -165,7 +175,7 @@ export default function Home() {
     }
   };
 
-  if (isUserLoading || (user && !userProfile)) {
+  if (isUserLoading) {
     return <LoadingSpinner />;
   }
 
@@ -188,7 +198,7 @@ export default function Home() {
           <Card>
             <CardHeader>
                 <CardTitle className="text-2xl font-bold font-headline">Course Module: {journeyState.journeyTitle}</CardTitle>
-                <CardDescription>Day {journeyState.day} of your learning journey.</CardDescription>
+                <p className="text-muted-foreground">Day {journeyState.day} of your learning journey.</p>
             </CardHeader>
           </Card>
 
@@ -233,8 +243,6 @@ export default function Home() {
     return <InterestForm onInterestsSubmit={handleInterestsSubmit} />;
   }
   
-  const points = (userProfile?.streak || 0) * 10;
-
   return (
     <div className="flex flex-col min-h-screen">
       <Header points={points} onSignOut={handleSignOut} />
@@ -244,7 +252,7 @@ export default function Home() {
             {renderJourneyContent()}
           </div>
           <div className="lg:col-span-1 space-y-8 mt-8 lg:mt-0">
-            <GamificationSidebar userPoints={points} userLevel={userProfile?.level || 'Beginner'} />
+            <GamificationSidebar userPoints={points} />
           </div>
         </div>
       </main>
