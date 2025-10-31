@@ -76,32 +76,26 @@ export default function Home() {
   const { data: userProfile } = useDoc<{streak: number}>(userProfileRef);
   const streak = userProfile?.streak ?? 0;
 
-  // Effect to check for pre-generated journey start
+  // This effect handles both starting a new journey and loading the most recent one.
   useEffect(() => {
-    if (isUserLoading) return; // Wait until user is loaded
-    const pregenInterestsJSON = localStorage.getItem('pregeneratedJourneyInterests');
-    if (pregenInterestsJSON) {
-        const pregenInterests = JSON.parse(pregenInterestsJSON);
-        localStorage.removeItem('pregeneratedJourneyInterests'); // Clear it after reading
-        if (pregenInterests && pregenInterests.length > 0) {
-            handleInterestsSubmit(pregenInterests);
-        }
-    }
-  }, [isUserLoading]); // Re-run when user loading state changes
+    if (isUserLoading || !user || !firestore) return;
 
-
-  // Effect to load the most recent journey
-  useEffect(() => {
-    if (!user || !firestore) return;
-
-    // Check if a journey is being started from another page
-    const pregenInterestsJSON = localStorage.getItem('pregeneratedJourneyInterests');
-    if (pregenInterestsJSON) {
-        return; // Don't load most recent if we are about to start a new one
-    }
-
-    const loadMostRecentJourney = async () => {
+    const loadJourney = async () => {
       setIsLoading(true);
+
+      // Priority 1: Check if a pre-generated journey needs to be started.
+      const pregenInterestsJSON = localStorage.getItem('pregeneratedJourneyInterests');
+      if (pregenInterestsJSON) {
+        localStorage.removeItem('pregeneratedJourneyInterests');
+        const pregenInterests = JSON.parse(pregenInterestsJSON);
+        if (pregenInterests && pregenInterests.length > 0) {
+            await handleInterestsSubmit(pregenInterests, true);
+            setIsLoading(false);
+            return;
+        }
+      }
+
+      // Priority 2: If not starting a new journey, load the most recent one.
       const journeysRef = collection(firestore, "users", user.uid, "learning_journeys");
       const q = query(journeysRef, orderBy("startDate", "desc"), limit(1));
       const querySnapshot = await getDocs(q);
@@ -110,34 +104,34 @@ export default function Home() {
         const journeyDoc = querySnapshot.docs[0];
         const journeyData = { id: journeyDoc.id, ...journeyDoc.data() } as Journey;
 
-        if (firestore && user) {
-            const topicsRef = collection(firestore, "users", user.uid, "learning_journeys", journeyData.id, "topics");
-            const topicsQuery = query(topicsRef, orderBy("day", "desc"), limit(1));
-            const topicsSnapshot = await getDocs(topicsQuery);
+        const topicsRef = collection(firestore, "users", user.uid, "learning_journeys", journeyData.id, "topics");
+        const topicsQuery = query(topicsRef, orderBy("day", "desc"), limit(1));
+        const topicsSnapshot = await getDocs(topicsQuery);
 
-            if (!topicsSnapshot.empty) {
-                const topicDoc = topicsSnapshot.docs[0];
-                const topicData = { id: topicDoc.id, ...topicDoc.data() } as Topic;
-                setJourneyState({ journey: journeyData, currentTopic: topicData });
-            } else {
-                setJourneyState({ journey: journeyData, currentTopic: null });
-            }
+        if (!topicsSnapshot.empty) {
+            const topicDoc = topicsSnapshot.docs[0];
+            const topicData = { id: topicDoc.id, ...topicDoc.data() } as Topic;
+            setJourneyState({ journey: journeyData, currentTopic: topicData });
+        } else {
+            setJourneyState({ journey: journeyData, currentTopic: null });
         }
       }
       setIsLoading(false);
     };
 
-    loadMostRecentJourney();
-  }, [user, firestore]);
+    loadJourney();
+  }, [isUserLoading, user, firestore]);
 
   const startNewJourney = () => {
     setInterests([]);
     setJourneyState(null);
   };
   
-  const handleInterestsSubmit = async (submittedInterests: string[]) => {
+  const handleInterestsSubmit = async (submittedInterests: string[], fromPregen = false) => {
     if (isLoading || !user || !firestore) return;
-    setIsLoading(true);
+    if (!fromPregen) {
+        setIsLoading(true);
+    }
     setInterests(submittedInterests);
     setJourneyState(null); // Clear previous journey state
 
@@ -194,7 +188,9 @@ export default function Home() {
     } catch (error) {
       console.error("Failed to generate learning journey:", error);
     } finally {
-      setIsLoading(false);
+        if (!fromPregen) {
+            setIsLoading(false);
+        }
     }
   };
 
