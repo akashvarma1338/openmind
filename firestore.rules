@@ -63,88 +63,76 @@ service cloud.firestore {
       allow create: if isSignedIn() && isOwner(userId) && request.resource.data.id == userId;
       allow update: if isSignedIn() && isOwner(userId) && resource.data.id == userId; // Enforce immutability of user ID
       allow delete: if isSignedIn() && isOwner(userId) && resource != null;
-    }
 
-    /**
-     * @description Manages learning journeys for each user. Only the authenticated user can read and write their own learning journeys.
-     * @path /users/{userId}/learning_journeys/{journeyId}
-     * @allow (get) User 'user123' can get their own learning journey 'journey456'.
-     * @allow (create) User 'user123' can create a new learning journey under their profile.
-     * @deny (get) User 'user456' cannot get 'user123' learning journey.
-     * @deny (update) User 'user456' cannot update 'user123' learning journey.
-     * @principle Enforces document ownership for reads and writes, extending user-ownership model.
-     */
-    match /users/{userId}/learning_journeys/{journeyId} {
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
+        /**
+         * @description Manages learning journeys for each user. Only the authenticated user can read and write their own learning journeys.
+         * @path /users/{userId}/learning_journeys/{journeyId}
+         * @allow (get) User 'user123' can get their own learning journey 'journey456'.
+         * @allow (create) User 'user123' can create a new learning journey under their profile.
+         * @deny (get) User 'user456' cannot get 'user123' learning journey.
+         * @deny (update) User 'user456' cannot update 'user123' learning journey.
+         * @principle Enforces document ownership for reads and writes, extending user-ownership model.
+         */
+        match /learning_journeys/{journeyId} {
+          allow get: if isOwner(userId);
+          allow list: if isOwner(userId);
 
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
+          allow create: if isSignedIn() && isOwner(userId);
+          allow update: if isSignedIn() && isOwner(userId) && resource != null;
+          allow delete: if isSignedIn() && isOwner(userId) && resource != null;
 
-      allow create: if isSignedIn() && isOwner(userId);
-      allow update: if isSignedIn() && isOwner(userId) && resource != null;
-      allow delete: if isSignedIn() && isOwner(userId) && resource != null;
-    }
+            /**
+             * @description Manages topics within a learning journey. Only the authenticated user can read and write topics under their learning journeys.
+             * @path /users/{userId}/learning_journeys/{journeyId}/topics/{topicId}
+             * @allow (get) User 'user123' can get topic 'topic789' within their learning journey.
+             * @allow (create) User 'user123' can create a new topic within their learning journey.
+             * @deny (get) User 'user456' cannot get a topic from 'user123' learning journey.
+             * @deny (update) User 'user456' cannot update a topic from 'user123' learning journey.
+             * @principle Enforces document ownership for reads and writes, extending user-ownership model.
+             */
+            match /topics/{topicId} {
+              allow get: if isOwner(userId);
+              allow list: if isOwner(userId);
 
-    /**
-     * @description Manages topics within a learning journey. Only the authenticated user can read and write topics under their learning journeys.
-     * @path /users/{userId}/learning_journeys/{journeyId}/topics/{topicId}
-     * @allow (get) User 'user123' can get topic 'topic789' within their learning journey.
-     * @allow (create) User 'user123' can create a new topic within their learning journey.
-     * @deny (get) User 'user456' cannot get a topic from 'user123' learning journey.
-     * @deny (update) User 'user456' cannot update a topic from 'user123' learning journey.
-     * @principle Enforces document ownership for reads and writes, extending user-ownership model.
-     */
-    match /users/{userId}/learning_journeys/{journeyId}/topics/{topicId} {
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
+              allow create: if isSignedIn() && isOwner(userId);
+              update: if isSignedIn() && isOwner(userId) && resource != null;
+              allow delete: if isSignedIn() && isOwner(userId) && resource != null;
 
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
+                /**
+                 * @description Manages quizzes for each topic within a learning journey. Only the authenticated user can read and write quizzes under their topics.
+                 * @path /users/{userId}/learning_journeys/{journeyId}/topics/{topicId}/quizzes/{quizId}
+                 * @allow (get) User 'user123' can get quiz 'quiz012' within their topic.
+                 * @allow (create) User 'user123' can create a new quiz within their topic.
+                 * @deny (get) User 'user456' cannot get a quiz from 'user123' learning journey.
+                 * @deny (update) User 'user456' cannot update a quiz from 'user123' learning journey.
+                 * @principle Enforces document ownership for reads and writes, extending user-ownership model.
+                 */
+                match /quizzes/{quizId} {
+                  allow get: if isOwner(userId);
+                  allow list: if isOwner(userId);
 
-      allow create: if isSignedIn() && isOwner(userId);
-      update: if isSignedIn() && isOwner(userId) && resource != null;
-      allow delete: if isSignedIn() && isOwner(userId) && resource != null;
-    }
-
-    /**
-     * @description Manages quizzes for each topic within a learning journey. Only the authenticated user can read and write quizzes under their topics.
-     * @path /users/{userId}/learning_journeys/{journeyId}/topics/{topicId}/quizzes/{quizId}
-     * @allow (get) User 'user123' can get quiz 'quiz012' within their topic.
-     * @allow (create) User 'user123' can create a new quiz within their topic.
-     * @deny (get) User 'user456' cannot get a quiz from 'user123' learning journey.
-     * @deny (update) User 'user456' cannot update a quiz from 'user123' learning journey.
-     * @principle Enforces document ownership for reads and writes, extending user-ownership model.
-     */
-    match /users/{userId}/learning_journeys/{journeyId}/topics/{topicId}/quizzes/{quizId} {
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
-
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-
-      allow create: if isSignedIn() && isOwner(userId);
-      allow update: if isSignedIn() && isOwner(userId) && resource != null;
-      allow delete: if isSignedIn() && isOwner(userId) && resource != null;
-    }
-
-    /**
-     * @description Allows any authenticated user to list the entire `curiosity_points` collection for the leaderboard.
-     */
-    match /curiosity_points {
-        allow list: if isSignedIn();
+                  allow create: if isSignedIn() && isOwner(userId);
+                  allow update: if isSignedIn() && isOwner(userId) && resource != null;
+                  allow delete: if isSignedIn() && isOwner(userId) && resource != null;
+                }
+            }
+        }
     }
 
     /**
      * @description Rules for individual documents in the `curiosity_points` collection.
+     * `list` is allowed for any signed-in user to enable the leaderboard.
+     * `get` is allowed for any signed-in user.
+     * `create`, `update`, `delete` are restricted to the document owner.
      */
     match /curiosity_points/{pointId} {
         function isOwner() {
             return request.auth.uid == pointId;
         }
+
+        // Allow any authenticated user to list the collection for the leaderboard.
+        // This rule is evaluated for collection queries.
+        allow list: if isSignedIn();
 
         // Allow any authenticated user to read/get for the leaderboard.
         allow get: if isSignedIn();
@@ -156,3 +144,5 @@ service cloud.firestore {
     }
   }
 }
+
+    
