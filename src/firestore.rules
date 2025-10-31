@@ -118,17 +118,19 @@ service cloud.firestore {
             }
         }
     }
-     /**
+    
+    /**
      * @description Manages curiosity points for leaderboards.
-     * @path /curiosity_points/{userId}
-     * @allow (list) Any authenticated user can list the points for the leaderboard.
-     * @allow (get) A user can get their own points document.
-     * @allow (write) A user can only create or update their own points document.
+     * Any authenticated user can list the points collection for the leaderboard.
+     * A user can only get, create, or update their own points document.
      */
     match /curiosity_points/{pointId} {
-        allow list: if isSignedIn();
         allow get: if isSignedIn() && request.auth.uid == pointId;
         allow write: if isSignedIn() && request.auth.uid == pointId;
+    }
+
+    match /curiosity_points {
+        allow list: if isSignedIn();
     }
   }
 }
