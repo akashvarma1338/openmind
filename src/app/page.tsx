@@ -405,7 +405,7 @@ export default function Home() {
             </div>
             <aside className="space-y-8">
                 {user && journeyState?.journey && (
-                    <Leaderboard user={user} journeyTitle={journeyState.journey.title} />
+                    <Leaderboard user={user} />
                 )}
                 {user && (
                     <JourneyHistorySidebar user={user} onSelectJourney={handleSelectJourney} />
@@ -416,5 +416,3 @@ export default function Home() {
     </div>
   );
 }
-
-    

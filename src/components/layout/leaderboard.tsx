@@ -2,7 +2,7 @@
 'use client';
 
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where, orderBy, limit } from 'firebase/firestore';
+import { collection, query, orderBy, limit } from 'firebase/firestore';
 import type { User } from 'firebase/auth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Trophy, Flame } from 'lucide-react';
@@ -14,25 +14,24 @@ type LeaderboardEntry = {
   userId: string;
   userName: string;
   streak: number;
+  journeyTitle: string;
 };
 
 type LeaderboardProps = {
   user: User;
-  journeyTitle: string;
 };
 
-export function Leaderboard({ user, journeyTitle }: LeaderboardProps) {
+export function Leaderboard({ user }: LeaderboardProps) {
   const firestore = useFirestore();
 
   const leaderboardQuery = useMemoFirebase(() => {
-    if (!firestore || !journeyTitle) return null;
+    if (!firestore) return null;
     return query(
       collection(firestore, 'curiosity_points'),
-      where('journeyTitle', '==', journeyTitle),
       orderBy('streak', 'desc'),
       limit(10)
     );
-  }, [firestore, journeyTitle]);
+  }, [firestore]);
 
   const { data: leaderboardData, isLoading } = useCollection<LeaderboardEntry>(leaderboardQuery);
 
@@ -54,9 +53,9 @@ export function Leaderboard({ user, journeyTitle }: LeaderboardProps) {
       <CardHeader>
         <CardTitle className="flex items-center gap-3 font-headline">
           <Trophy className="h-6 w-6 text-primary" />
-          Leaderboard
+          Top Learners
         </CardTitle>
-        <CardDescription>Top learners in "{journeyTitle}"</CardDescription>
+        <CardDescription>See who has the highest curiosity streak!</CardDescription>
       </CardHeader>
       <CardContent>
         {isLoading ? (
@@ -83,9 +82,12 @@ export function Leaderboard({ user, journeyTitle }: LeaderboardProps) {
                     <span className={cn('font-bold text-lg w-6', getRankColor(index))}>
                       {index + 1}
                     </span>
-                    <span className={cn('font-semibold', isCurrentUser && 'text-primary')}>
-                      {isCurrentUser ? 'You' : entry.userName}
-                    </span>
+                    <div className="flex flex-col">
+                      <span className={cn('font-semibold', isCurrentUser && 'text-primary')}>
+                        {isCurrentUser ? 'You' : entry.userName}
+                      </span>
+                      <span className="text-xs text-muted-foreground">{entry.journeyTitle}</span>
+                    </div>
                   </div>
                   <div className="flex items-center gap-2 font-bold text-orange-500">
                     <Flame className="h-5 w-5" />
@@ -100,5 +102,3 @@ export function Leaderboard({ user, journeyTitle }: LeaderboardProps) {
     </Card>
   );
 }
-
-    

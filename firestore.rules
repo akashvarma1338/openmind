@@ -152,7 +152,8 @@ service cloud.firestore {
      * @description Separate rule to allow listing the entire `curiosity_points` collection for leaderboards.
      */
     match /curiosity_points {
-        allow list: if isSignedIn();
+        // Allow list if the query is ordered by streak, which is required for the leaderboard.
+        allow list: if isSignedIn() && request.query.orderBy.streak == 'desc';
     }
   }
 }
