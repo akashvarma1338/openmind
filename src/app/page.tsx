@@ -26,6 +26,8 @@ import { ArrowRight } from "lucide-react";
 import { collection, doc, Timestamp, query, orderBy, limit, getDocs, serverTimestamp, writeBatch } from "firebase/firestore";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
 import { JourneyHistorySidebar } from "@/components/layout/journey-history-sidebar";
+import { Leaderboard } from "@/components/layout/leaderboard";
+import { useToast } from "@/hooks/use-toast";
 
 type Journey = {
   id: string;
@@ -67,6 +69,7 @@ export default function Home() {
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
   const firestore = useFirestore();
+  const { toast } = useToast();
   
   const userProfileRef = useMemoFirebase(() => {
     if (!user || !firestore) return null;
@@ -252,6 +255,11 @@ export default function Home() {
           userName: userProfile.name, // Keep denormalized name up-to-date
           journeyTitle: journey.title, // Keep denormalized journey title up-to-date
         }, { merge: true });
+        
+        toast({
+            title: "Daily Progression Bonus!",
+            description: `Your curiosity streak is now ${newStreak}!`,
+        });
       }
       
       await batch.commit();
@@ -402,9 +410,12 @@ export default function Home() {
             <div className="lg:col-span-2 space-y-8">
                 {renderJourneyContent()}
             </div>
-            <aside className="space-y-8">
-                {user && (
-                    <JourneyHistorySidebar user={user} onSelectJourney={handleSelectJourney} />
+            <aside className="space-y-8 lg:block hidden">
+                {user && journeyState?.journey && (
+                    <>
+                        <JourneyHistorySidebar user={user} onSelectJourney={handleSelectJourney} />
+                        <Leaderboard user={user} />
+                    </>
                 )}
             </aside>
         </div>
