@@ -36,7 +36,7 @@ const prompt = ai.definePrompt({
   name: 'generateDailyTopicPrompt',
   input: {schema: GenerateDailyTopicInputSchema},
   output: {schema: GenerateDailyTopicOutputSchema},
-  prompt: `You are an AI learning companion. You are great at creating structured, multi-day learning journeys.
+  prompt: `You are an AI learning companion. You are great at creating structured, open-ended learning journeys that can span many days.
 
   User Interests:
   {{#each interests}}- {{this}}\n{{/each}}
@@ -46,7 +46,7 @@ const prompt = ai.definePrompt({
   The topic should build on previous knowledge but be digestible in a single day.
   Mark "isFirstDay" as false. If you feel this is the final topic to conclude the journey, mark "isLastDay" as true.
   {{else}}
-  This is the start of a new journey. Generate a broad, engaging title for a 5-day learning journey based on the user's interests.
+  This is the start of a new journey. Generate a broad, engaging title for a learning journey based on the user's interests.
   Then, generate the very first daily learning topic for Day 1 of this new journey.
   Mark "isFirstDay" as true and "isLastDay" as false.
   {{/if}}

@@ -67,6 +67,7 @@ export default function Home() {
   const [journeyState, setJourneyState] = useState<JourneyState | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
@@ -335,6 +336,7 @@ export default function Home() {
 
   const handleSelectJourney = (journey: Journey, topic: Topic) => {
     setJourneyState({ journey, currentTopic: topic });
+    setIsHistoryOpen(false);
   }
 
   if (isUserLoading) {
@@ -431,21 +433,25 @@ export default function Home() {
   return (
     <div className="flex flex-col min-h-screen">
       <ConfettiCelebration active={showConfetti} onComplete={() => setShowConfetti(false)} />
-      <Header streak={streak} onSignOut={handleSignOut} onHomeClick={startNewJourney} />
+      <Header 
+        streak={streak} 
+        onSignOut={handleSignOut} 
+        onHomeClick={startNewJourney}
+        onHistoryClick={() => setIsHistoryOpen(true)}
+      />
       <main className="flex-1 p-4 md:p-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
-            <div className="lg:col-span-2 space-y-8">
-                {renderJourneyContent()}
-            </div>
-            <aside className="space-y-8 lg:block hidden">
-                {user && (
-                    <>
-                        <JourneyHistorySidebar user={user} onSelectJourney={handleSelectJourney} />
-                    </>
-                )}
-            </aside>
+        <div className="max-w-4xl mx-auto">
+            {renderJourneyContent()}
         </div>
       </main>
+      {user && (
+        <JourneyHistorySidebar 
+            user={user} 
+            isOpen={isHistoryOpen}
+            onClose={() => setIsHistoryOpen(false)}
+            onSelectJourney={handleSelectJourney} 
+        />
+       )}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { Logo } from "@/components/common/icons";
 import { Button } from "../ui/button";
-import { Flame, LogOut, Home, User, BookMarked } from "lucide-react";
+import { Flame, LogOut, Home, User, BookMarked, History } from "lucide-react";
 import Link from "next/link";
 import {
   DropdownMenu,
@@ -16,9 +16,10 @@ type HeaderProps = {
   streak: number;
   onSignOut: () => void;
   onHomeClick: () => void;
+  onHistoryClick: () => void;
 };
 
-export function Header({ streak, onSignOut, onHomeClick }: HeaderProps) {
+export function Header({ streak, onSignOut, onHomeClick, onHistoryClick }: HeaderProps) {
   return (
     <header className="sticky top-0 z-10 w-full bg-background/80 backdrop-blur-sm border-b">
       <div className="container mx-auto flex items-center justify-between h-16 px-4">
@@ -31,6 +32,10 @@ export function Header({ streak, onSignOut, onHomeClick }: HeaderProps) {
         <div className="flex items-center gap-2 md:gap-4">
           <Button variant="ghost" size="icon" onClick={onHomeClick} aria-label="Home">
             <Home className="h-5 w-5" />
+          </Button>
+
+          <Button variant="ghost" size="icon" onClick={onHistoryClick} aria-label="Journey History">
+              <History className="h-5 w-5" />
           </Button>
 
           <DropdownMenu>

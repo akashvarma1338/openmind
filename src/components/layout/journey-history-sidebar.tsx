@@ -1,6 +1,6 @@
 'use client';
 
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { useFirestore } from '@/firebase';
 import { collection, query, orderBy, getDocs, doc, limit } from 'firebase/firestore';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '../ui/card';
 import { ScrollArea } from '../ui/scroll-area';
@@ -9,6 +9,7 @@ import type { User } from 'firebase/auth';
 import { Skeleton } from '../ui/skeleton';
 import { BookCopy } from 'lucide-react';
 import { Button } from '../ui/button';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '../ui/sheet';
 
 type Journey = {
   id: string;
@@ -32,22 +33,20 @@ type Topic = {
 
 type JourneyHistorySidebarProps = {
   user: User;
+  isOpen: boolean;
+  onClose: () => void;
   onSelectJourney: (journey: any, topic: any) => void;
 };
 
-export function JourneyHistorySidebar({ user, onSelectJourney }: JourneyHistorySidebarProps) {
+export function JourneyHistorySidebar({ user, isOpen, onClose, onSelectJourney }: JourneyHistorySidebarProps) {
   const firestore = useFirestore();
   const [journeys, setJourneys] = useState<Journey[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const journeysRef = useMemoFirebase(() => {
-    if (!user || !firestore) return null;
-    return collection(firestore, "users", user.uid, "learning_journeys");
-  }, [user, firestore]);
-
   useEffect(() => {
-    if (!journeysRef) return;
+    if (!firestore || !user) return;
 
+    const journeysRef = collection(firestore, "users", user.uid, "learning_journeys");
     const fetchJourneys = async () => {
         setIsLoading(true);
         const q = query(journeysRef, orderBy('startDate', 'desc'));
@@ -57,7 +56,7 @@ export function JourneyHistorySidebar({ user, onSelectJourney }: JourneyHistoryS
         setIsLoading(false);
     }
     fetchJourneys();
-  }, [journeysRef]);
+  }, [firestore, user]);
 
   const handleJourneyClick = async (journey: Journey) => {
     if (!firestore || !user) return;
@@ -76,45 +75,46 @@ export function JourneyHistorySidebar({ user, onSelectJourney }: JourneyHistoryS
 
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-3 font-headline">
-            <BookCopy className="h-6 w-6 text-primary" />
-            Course History
-        </CardTitle>
-        <CardDescription>Review your past learning journeys.</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <ScrollArea className="h-96">
-            {isLoading ? (
-                <div className="space-y-4">
-                    <Skeleton className="h-10 w-full" />
-                    <Skeleton className="h-10 w-full" />
-                    <Skeleton className="h-10 w-full" />
-                </div>
-            ) : journeys.length === 0 ? (
-                <p className='text-muted-foreground text-sm'>You haven't started any journeys yet.</p>
-            ) : (
-                <div className="space-y-2">
-                    {journeys.map(journey => (
-                        <Button 
-                            key={journey.id}
-                            variant="ghost" 
-                            className="w-full justify-start text-left h-auto"
-                            onClick={() => handleJourneyClick(journey)}
-                        >
-                            <div className="flex flex-col">
-                                <span>{journey.title}</span>
-                                <span className="text-xs text-muted-foreground">
-                                    Started: {journey.startDate.toDate().toLocaleDateString()}
-                                </span>
-                            </div>
-                        </Button>
-                    ))}
-                </div>
-            )}
-        </ScrollArea>
-      </CardContent>
-    </Card>
+    <Sheet open={isOpen} onOpenChange={onClose}>
+        <SheetContent>
+            <SheetHeader>
+                <SheetTitle className="flex items-center gap-3 font-headline">
+                    <BookCopy className="h-6 w-6 text-primary" />
+                    Course History
+                </SheetTitle>
+            </SheetHeader>
+            <div className="py-4">
+                <ScrollArea className="h-[calc(100vh-8rem)]">
+                    {isLoading ? (
+                        <div className="space-y-4">
+                            <Skeleton className="h-10 w-full" />
+                            <Skeleton className="h-10 w-full" />
+                            <Skeleton className="h-10 w-full" />
+                        </div>
+                    ) : journeys.length === 0 ? (
+                        <p className='text-muted-foreground text-sm'>You haven't started any journeys yet.</p>
+                    ) : (
+                        <div className="space-y-2">
+                            {journeys.map(journey => (
+                                <Button 
+                                    key={journey.id}
+                                    variant="ghost" 
+                                    className="w-full justify-start text-left h-auto"
+                                    onClick={() => handleJourneyClick(journey)}
+                                >
+                                    <div className="flex flex-col">
+                                        <span>{journey.title}</span>
+                                        <span className="text-xs text-muted-foreground">
+                                            Started: {journey.startDate.toDate().toLocaleDateString()}
+                                        </span>
+                                    </div>
+                                </Button>
+                            ))}
+                        </div>
+                    )}
+                </ScrollArea>
+            </div>
+        </SheetContent>
+    </Sheet>
   );
 }
