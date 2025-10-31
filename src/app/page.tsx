@@ -5,7 +5,6 @@ import React, { useState, useEffect } from "react";
 import { Header } from "@/components/layout/header";
 import { InterestForm } from "@/components/onboarding/interest-form";
 import { DailyJourneyDisplay } from "@/components/journey/daily-journey-display";
-import { GamificationSidebar } from "@/components/layout/gamification-sidebar";
 import { Button } from "@/components/ui/button";
 import {
   generateDailyTopic,
@@ -391,15 +390,12 @@ export default function Home() {
     <div className="flex flex-col min-h-screen">
       <Header streak={streak} onSignOut={handleSignOut} onHomeClick={startNewJourney} />
       <main className="flex-1 p-4 md:p-8">
-        <div className="grid grid-cols-1 lg:grid-cols-4 lg:gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 lg:gap-8">
             <div className="lg:col-span-1 space-y-8 mt-8 lg:mt-0 order-2 lg:order-1">
                 {user && <JourneyHistorySidebar user={user} onSelectJourney={handleSelectJourney} />}
             </div>
           <div className="lg:col-span-2 space-y-8 order-1 lg:order-2">
             {renderJourneyContent()}
-          </div>
-          <div className="lg:col-span-1 space-y-8 mt-8 lg:mt-0 order-3">
-            <GamificationSidebar userStreak={streak} journeyTitle={journeyState?.journey?.title ?? null} />
           </div>
         </div>
       </main>
