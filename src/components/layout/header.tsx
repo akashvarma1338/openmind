@@ -1,6 +1,6 @@
 import { Logo } from "@/components/common/icons";
 import { Button } from "../ui/button";
-import { Flame, LogOut, Home, User, BookMarked, History, Sparkles, Trophy } from "lucide-react";
+import { Flame, LogOut, Home, User, BookMarked, History, Sparkles, Trophy, Menu } from "lucide-react";
 import Link from "next/link";
 import {
   DropdownMenu,
@@ -9,6 +9,10 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuPortal
 } from "@/components/ui/dropdown-menu";
 import { streams } from "@/lib/pregenerated-courses";
 import { ThemeToggle } from "../common/theme-toggle";
@@ -34,53 +38,59 @@ export function Header({ streak, points, onSignOut, onHomeClick, onHistoryClick 
           </button>
         </div>
         <div className="flex items-center gap-2 md:gap-4">
+          <div className="flex items-center gap-2 border rounded-full px-3 h-9 text-sm font-semibold">
+            <Flame className="h-5 w-5 text-orange-400" />
+            <span>1</span>
+            <span className="hidden sm:inline-flex text-muted-foreground">Streak</span>
+          </div>
+          <div className="flex items-center gap-2 border rounded-full px-3 h-9 text-sm font-semibold">
+              <Sparkles className="h-5 w-5 text-yellow-400" />
+              <span>{points}</span>
+              <span className="hidden sm:inline-flex text-muted-foreground">Points</span>
+          </div>
           <ThemeToggle />
-          <Button variant="ghost" size="icon" onClick={onHomeClick} aria-label="Home">
-            <Home className="h-5 w-5" />
-          </Button>
-
-          <Button variant="ghost" size="icon" onClick={onHistoryClick} aria-label="Journey History">
-              <History className="h-5 w-5" />
-          </Button>
-
+          
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" aria-label="Browse Courses">
-                <BookMarked className="h-5 w-5" />
+              <Button variant="ghost" size="icon" aria-label="Main Menu">
+                  <Menu className="h-5 w-5" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Browse Courses</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {streams.map((stream) => (
-                 <Link href={`/courses/${stream.id}`} passHref key={stream.id}>
-                    <DropdownMenuItem>
-                        {stream.name}
-                    </DropdownMenuItem>
-                 </Link>
-              ))}
+              <DropdownMenuItem onClick={onHomeClick}>
+                <Home className="mr-2 h-4 w-4"/>
+                <span>Home</span>
+              </DropdownMenuItem>
+               <DropdownMenuItem onClick={onHistoryClick}>
+                <History className="mr-2 h-4 w-4"/>
+                <span>Journey History</span>
+              </DropdownMenuItem>
+              <Link href="/leaderboard" passHref>
+                <DropdownMenuItem>
+                  <Trophy className="mr-2 h-4 w-4"/>
+                  <span>Leaderboard</span>
+                </DropdownMenuItem>
+              </Link>
+              <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                      <BookMarked className="mr-2 h-4 w-4"/>
+                      <span>Browse Courses</span>
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuPortal>
+                      <DropdownMenuSubContent>
+                          {streams.map((stream) => (
+                              <Link href={`/courses/${stream.id}`} passHref key={stream.id}>
+                                  <DropdownMenuItem>
+                                      {stream.name}
+                                  </DropdownMenuItem>
+                              </Link>
+                          ))}
+                      </DropdownMenuSubContent>
+                  </DropdownMenuPortal>
+              </DropdownMenuSub>
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <Link href="/leaderboard" passHref>
-            <Button variant="ghost" size="icon" aria-label="Leaderboard">
-                <Trophy className="h-5 w-5" />
-            </Button>
-          </Link>
-
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-2 border rounded-full px-3 h-9 text-sm font-semibold">
-              <Flame className="h-5 w-5 text-orange-400" />
-              <span>1</span>
-              <span className="hidden sm:inline-flex text-muted-foreground">Streak</span>
-            </div>
-            <div className="flex items-center gap-2 border rounded-full px-3 h-9 text-sm font-semibold">
-                <Sparkles className="h-5 w-5 text-yellow-400" />
-                <span>{points}</span>
-                <span className="hidden sm:inline-flex text-muted-foreground">Points</span>
-            </div>
-          </div>
-          
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" aria-label="User Menu">
