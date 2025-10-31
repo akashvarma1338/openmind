@@ -9,6 +9,7 @@ import {
 import { Logo } from "@/components/common/icons";
 import { doc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
 
 type AuthData = {
     email: string;
@@ -23,11 +24,15 @@ export default function AuthPage() {
   const auth = useAuth();
   const firestore = useFirestore();
   const { toast } = useToast();
+  const router = useRouter();
 
   const handleAuth = (data: AuthData) => {
     if (!auth || !firestore) return;
     if (isLogin) {
       initiateEmailSignIn(auth, data.email, data.password)
+        .then(() => {
+            router.push('/');
+        })
         .catch(error => {
             let title = 'Sign-in Failed';
             let description = 'An unexpected error occurred.';
