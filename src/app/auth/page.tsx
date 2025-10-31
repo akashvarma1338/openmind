@@ -1,0 +1,44 @@
+"use client";
+import { useState } from "react";
+import { AuthForm } from "@/components/auth/auth-form";
+import { useAuth } from "@/firebase";
+import {
+  initiateEmailSignUp,
+  initiateEmailSignIn,
+} from "@/firebase/non-blocking-login";
+import { Logo } from "@/components/common/icons";
+
+export default function AuthPage() {
+  const [isLogin, setIsLogin] = useState(true);
+  const auth = useAuth();
+
+  const handleAuth = (data: { email: string; password: any }) => {
+    if (!auth) return;
+    if (isLogin) {
+      initiateEmailSignIn(auth, data.email, data.password);
+    } else {
+      initiateEmailSignUp(auth, data.email, data.password);
+    }
+  };
+
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
+      <div className="mx-auto w-full max-w-md space-y-6">
+        <div className="flex flex-col items-center text-center">
+            <Logo className="h-12 w-12 text-primary" />
+            <h1 className="text-3xl font-bold font-headline mt-4">
+                Welcome to Curiosity Engine
+            </h1>
+            <p className="text-muted-foreground mt-2">
+                {isLogin ? "Sign in to continue your learning journey." : "Create an account to get started."}
+            </p>
+        </div>
+        <AuthForm
+          isLogin={isLogin}
+          onSubmit={handleAuth}
+          setIsLogin={setIsLogin}
+        />
+      </div>
+    </div>
+  );
+}

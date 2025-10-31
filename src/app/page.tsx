@@ -6,7 +6,6 @@ import { InterestForm } from "@/components/onboarding/interest-form";
 import { DailyJourneyDisplay } from "@/components/journey/daily-journey-display";
 import { GamificationSidebar } from "@/components/layout/gamification-sidebar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   generateDailyTopic,
   type GenerateDailyTopicOutput,
@@ -19,6 +18,9 @@ import {
   buildMicroQuiz,
   type BuildMicroQuizOutput,
 } from "@/ai/flows/build-micro-quiz";
+import { useUser, useAuth } from "@/firebase";
+import AuthPage from "@/app/auth/page";
+import { signOut } from "firebase/auth";
 
 export default function Home() {
   const [interests, setInterests] = useState<string[]>([]);
@@ -30,6 +32,10 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [quizScore, setQuizScore] = useState<number | null>(null);
   const [points, setPoints] = useState(0);
+
+  const { user, isUserLoading } = useUser();
+  const auth = useAuth();
+
 
   const startNewJourney = () => {
     setInterests([]);
@@ -79,10 +85,28 @@ export default function Home() {
     setQuizScore(score);
     setPoints((p) => p + correctAnswers * 5);
   };
+  
+  const handleSignOut = async () => {
+    if (auth) {
+      await signOut(auth);
+    }
+  };
+
+  if (isUserLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-xl">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <AuthPage />;
+  }
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header points={points} />
+      <Header points={points} onSignOut={handleSignOut} />
       <main className="flex-1 p-4 md:p-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 lg:gap-8">
           <div className="lg:col-span-2 space-y-8">
