@@ -39,12 +39,12 @@ export function Header({ streak, points, onSignOut, onHomeClick, onHistoryClick 
         </div>
         <div className="flex items-center gap-2 md:gap-4">
           <div className="flex items-center gap-2 border rounded-full px-3 h-9 text-sm font-semibold">
-            <Flame className="h-5 w-5 text-orange-400" />
+            <Flame className="h-5 w-5 text-orange-400 transition-transform group-hover:scale-110" />
             <span>1</span>
             <span className="hidden sm:inline-flex text-muted-foreground">Streak</span>
           </div>
           <div className="flex items-center gap-2 border rounded-full px-3 h-9 text-sm font-semibold">
-              <Sparkles className="h-5 w-5 text-yellow-400" />
+              <Sparkles className="h-5 w-5 text-yellow-400 transition-transform group-hover:scale-110" />
               <span>{points}</span>
               <span className="hidden sm:inline-flex text-muted-foreground">Points</span>
           </div>
