@@ -14,7 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Trophy, Flame } from "lucide-react";
-import { useUser, useFirestore } from "@/firebase";
+import { useUser, useFirestore, errorEmitter, FirestorePermissionError } from "@/firebase";
 import { collection, query, where, orderBy, limit, getDocs } from "firebase/firestore";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Skeleton } from "../ui/skeleton";
@@ -46,8 +46,9 @@ export function GamificationSidebar({ userStreak, journeyTitle }: GamificationSi
 
     const buildLeaderboard = async () => {
         setIsLoading(true);
+        let pointsQuery;
         try {
-            const pointsQuery = query(
+            pointsQuery = query(
                 collection(firestore, 'curiosity_points'),
                 where('journeyTitle', '==', journeyTitle),
                 orderBy('streak', 'desc'),
@@ -67,7 +68,15 @@ export function GamificationSidebar({ userStreak, journeyTitle }: GamificationSi
             setLeaderboard(leaderboardData);
 
         } catch (error) {
-            console.error("Error building leaderboard:", error);
+            if (error instanceof Error && 'code' in error && (error as any).code === 'permission-denied') {
+                const contextualError = new FirestorePermissionError({
+                  operation: 'list',
+                  path: `curiosity_points where journeyTitle == ${journeyTitle}`, // Describe the query
+                });
+                errorEmitter.emit('permission-error', contextualError);
+            } else {
+              console.error("Error building leaderboard:", error);
+            }
         } finally {
             setIsLoading(false);
         }
