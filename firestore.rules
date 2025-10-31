@@ -6,7 +6,8 @@
  * This ruleset enforces a strict user-ownership model for all user-specific data,
  * ensuring that only the authenticated user can read and write their own data.
  * This model is extended hierarchically to learning journeys, topics, and quizzes
- * nested under each user. Curiosity points are also managed on a per-user basis.
+ * nested under each user. Curiosity points are managed on a per-user basis, but
+ * are listable by any authenticated user for leaderboard purposes.
  *
  * Data Structure:
  * - /users/{userId}: Stores user profile information.
@@ -20,6 +21,7 @@
  * - Listing of users is not permitted to prevent enumeration.
  * - Data model uses path-based ownership, where the document path determines ownership.
  * - Write validation is limited to checking the consistency of user IDs in paths and documents.
+ * - The `curiosity_points` collection is readable by any authenticated user to enable leaderboards.
  *
  * Denormalization for Authorization:
  * This ruleset relies on path-based ownership and avoids the need for `get()` calls by
@@ -162,8 +164,8 @@ service cloud.firestore {
 
       // Allow any authenticated user to read/get for the leaderboard.
       allow get: if isSignedIn();
-      // Allow any user to list for the leaderboard, as it's public-facing data.
-      allow list: if true;
+      // Allow any authenticated user to list for the leaderboard, as it's public-facing data.
+      allow list: if isSignedIn();
 
       // Only the owner can create, update, or delete their points.
       allow create: if isSignedIn() && isOwner(pointId);
@@ -172,3 +174,5 @@ service cloud.firestore {
     }
   }
 }
+
+    

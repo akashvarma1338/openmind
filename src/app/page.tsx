@@ -26,6 +26,7 @@ import { ArrowRight } from "lucide-react";
 import { collection, doc, Timestamp, query, orderBy, limit, getDocs, serverTimestamp, writeBatch } from "firebase/firestore";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
 import { JourneyHistorySidebar } from "@/components/layout/journey-history-sidebar";
+import { Leaderboard } from "@/components/layout/leaderboard";
 
 type Journey = {
   id: string;
@@ -317,7 +318,11 @@ export default function Home() {
     }
     
     if (!journeyState) {
-       return <InterestForm onInterestsSubmit={handleInterestsSubmit} />;
+       return (
+        <div className="max-w-2xl mx-auto">
+            <InterestForm onInterestsSubmit={handleInterestsSubmit} />
+        </div>
+       );
     }
 
     const { journey, currentTopic } = journeyState;
@@ -382,18 +387,34 @@ export default function Home() {
         </div>
       );
     }
-
-    return <InterestForm onInterestsSubmit={handleInterestsSubmit} />;
+    
+    return (
+        <div className="max-w-2xl mx-auto">
+            <InterestForm onInterestsSubmit={handleInterestsSubmit} />
+        </div>
+       );
   }
   
   return (
     <div className="flex flex-col min-h-screen">
       <Header streak={streak} onSignOut={handleSignOut} onHomeClick={startNewJourney} />
       <main className="flex-1 p-4 md:p-8">
-        <div className="mx-auto max-w-4xl space-y-8">
-          {renderJourneyContent()}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
+            <div className="lg:col-span-2 space-y-8">
+                {renderJourneyContent()}
+            </div>
+            <aside className="space-y-8">
+                {user && journeyState?.journey && (
+                    <Leaderboard user={user} journeyTitle={journeyState.journey.title} />
+                )}
+                {user && (
+                    <JourneyHistorySidebar user={user} onSelectJourney={handleSelectJourney} />
+                )}
+            </aside>
         </div>
       </main>
     </div>
   );
 }
+
+    
