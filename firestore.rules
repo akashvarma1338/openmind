@@ -112,7 +112,7 @@ service cloud.firestore {
      * @principle Enables topic-specific leaderboards while preventing broad data enumeration.
      */
     match /{path=**}/learning_journeys/{journeyId} {
-        allow list: if request.auth != null && request.query.where.get('title') != null;
+        allow list: if request.auth != null && request.query.get('title') != null;
     }
 
     /**
