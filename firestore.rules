@@ -105,6 +105,17 @@ service cloud.firestore {
     }
 
     /**
+     * @description Collection group rule for learning journeys. Allows listing journeys by title for the leaderboard.
+     * @path /users/{userId}/learning_journeys/{journeyId}
+     * @allow (list) Any signed-in user can list journeys if querying by title.
+     * @deny (list) Listing all journeys without filtering by title is not allowed.
+     * @principle Enables topic-specific leaderboards while preventing broad data enumeration.
+     */
+    match /{path=**}/learning_journeys/{journeyId} {
+        allow list: if request.auth != null && 'title' in request.query.get().keys();
+    }
+
+    /**
      * @description Manages topics within a learning journey. Only the authenticated user can read and write topics under their learning journeys.
      * @path /users/{userId}/learning_journeys/{journeyId}/topics/{topicId}
      * @allow (get) User 'user123' can get topic 'topic789' within their learning journey.

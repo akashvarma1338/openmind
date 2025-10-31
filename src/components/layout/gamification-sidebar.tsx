@@ -48,15 +48,15 @@ export function GamificationSidebar({ userStreak, journeyTitle }: GamificationSi
     );
   }, [firestore, journeyTitle]);
 
-  const { data: journeys, isLoading: journeysLoading } = useCollection<{id: string}>(journeysQuery);
+  const { data: journeys, isLoading: journeysLoading } = useCollection<{id: string, _path: {segments: string[]}}>(journeysQuery);
 
   // Step 2: Use the user IDs from those journeys to query the `curiosity_points` collection
   const pointsQuery = useMemoFirebase(() => {
     if (!firestore || !journeys || journeys.length === 0) return null;
     // Extract user IDs from the parent path of the journey documents
-    const userIds = journeys.map(j => j.id.split('/learning_journeys/')[0].split('/').pop()).filter(Boolean) as string[];
+    const userIds = journeys.map(j => j._path.segments[1]).filter(Boolean) as string[];
     if (userIds.length === 0) return null;
-
+    
     // This query is valid and secure. It queries the 'curiosity_points' collection
     // where reads are allowed on a per-user basis, but listing is also possible.
     // We filter by user IDs who are part of the current journey.
