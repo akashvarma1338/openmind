@@ -1,13 +1,13 @@
 "use client";
 import { useState } from "react";
 import { AuthForm } from "@/components/auth/auth-form";
-import { useAuth, setDocumentNonBlocking } from "@/firebase";
+import { useAuth, setDocumentNonBlocking, useFirestore } from "@/firebase";
 import {
   initiateEmailSignUp,
   initiateEmailSignIn,
 } from "@/firebase/non-blocking-login";
 import { Logo } from "@/components/common/icons";
-import { getFirestore, doc } from "firebase/firestore";
+import { doc } from "firebase/firestore";
 
 type AuthData = {
     email: string;
@@ -20,10 +20,10 @@ type AuthData = {
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
   const auth = useAuth();
-  const firestore = getFirestore();
+  const firestore = useFirestore();
 
   const handleAuth = (data: AuthData) => {
-    if (!auth) return;
+    if (!auth || !firestore) return;
     if (isLogin) {
       initiateEmailSignIn(auth, data.email, data.password);
     } else {

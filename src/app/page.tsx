@@ -18,12 +18,12 @@ import {
   buildMicroQuiz,
   type BuildMicroQuizOutput,
 } from "@/ai/flows/build-micro-quiz";
-import { useUser, useAuth, useDoc, useMemoFirebase, setDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase";
+import { useUser, useAuth, useDoc, useMemoFirebase, updateDocumentNonBlocking, useFirestore } from "@/firebase";
 import AuthPage from "@/app/auth/page";
 import { signOut } from "firebase/auth";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowRight } from "lucide-react";
-import { getFirestore, doc } from "firebase/firestore";
+import { doc } from "firebase/firestore";
 
 type JourneyState = {
   journeyTitle: string | null;
@@ -52,7 +52,7 @@ export default function Home() {
 
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
-  const firestore = getFirestore();
+  const firestore = useFirestore();
 
   const userProfileRef = useMemoFirebase(() => {
     if (firestore && user) {
@@ -92,7 +92,7 @@ export default function Home() {
   };
   
   const handleInterestsSubmit = async (submittedInterests: string[]) => {
-    if (isLoading || !userProfile) return;
+    if (isLoading || !userProfile || !userProfileRef) return;
 
     setIsLoading(true);
     setInterests(submittedInterests);
@@ -102,7 +102,7 @@ export default function Home() {
       const firstTopic = await generateDailyTopic({ interests: submittedInterests });
       
       const newStreak = userProfile.streak + 1;
-      updateDocumentNonBlocking(userProfileRef!, { streak: newStreak, level: getLevel(newStreak) });
+      updateDocumentNonBlocking(userProfileRef, { streak: newStreak, level: getLevel(newStreak) });
 
       setJourneyState({
         journeyTitle: firstTopic.journeyTitle,
@@ -123,7 +123,7 @@ export default function Home() {
   };
 
   const advanceToNextDay = async () => {
-    if (!journeyState || !journeyState.journeyTitle || isLoading || !userProfile) return;
+    if (!journeyState || !journeyState.journeyTitle || isLoading || !userProfile || !userProfileRef) return;
 
     setIsLoading(true);
     try {
@@ -132,7 +132,7 @@ export default function Home() {
         journeyTitle: journeyState.journeyTitle,
       });
       const newStreak = userProfile.streak + 1;
-      updateDocumentNonBlocking(userProfileRef!, { streak: newStreak, level: getLevel(newStreak) });
+      updateDocumentNonBlocking(userProfileRef, { streak: newStreak, level: getLevel(newStreak) });
       
       setJourneyState(prev => ({
         ...prev!,
