@@ -32,6 +32,7 @@ export function MicroQuiz({ quiz, onSubmit, score }: MicroQuizProps) {
   const [isSubmitted, setIsSubmitted] = useState(false);
 
   const handleAnswerChange = (questionIndex: number, answerIndex: number) => {
+    if (isSubmitted) return;
     const newAnswers = [...selectedAnswers];
     newAnswers[questionIndex] = answerIndex;
     setSelectedAnswers(newAnswers);
@@ -56,7 +57,7 @@ export function MicroQuiz({ quiz, onSubmit, score }: MicroQuizProps) {
     }, 0);
 
     return (
-      <Card className="border-accent relative overflow-hidden">
+      <Card className="bg-secondary/50 border-border">
         <CardHeader>
           <CardTitle>Quiz Results</CardTitle>
           <CardDescription>
@@ -85,20 +86,21 @@ export function MicroQuiz({ quiz, onSubmit, score }: MicroQuizProps) {
                       <div
                         key={aIndex}
                         className={cn(
-                          "flex items-center gap-2 p-2 rounded-md text-sm",
-                          isCorrect &&
-                            "bg-green-500/10 text-green-700 dark:text-green-400",
+                          "flex items-center gap-3 p-3 rounded-md text-sm border",
+                          isCorrect
+                            ? "border-green-500/50 bg-green-500/10 text-green-300"
+                            : "border-transparent",
                           isSelected &&
                             !isCorrect &&
-                            "bg-red-500/10 text-red-700 dark:text-red-400"
+                            "border-red-500/50 bg-red-500/10 text-red-300"
                         )}
                       >
                         {isCorrect ? (
-                          <CheckCircle className="h-4 w-4" />
+                          <CheckCircle className="h-5 w-5 text-green-400" />
                         ) : isSelected ? (
-                          <XCircle className="h-4 w-4" />
+                          <XCircle className="h-5 w-5 text-red-400" />
                         ) : (
-                          <div className="w-4 h-4" />
+                          <div className="w-5 h-5" />
                         )}
                         <span>{answer}</span>
                       </div>
@@ -127,7 +129,7 @@ export function MicroQuiz({ quiz, onSubmit, score }: MicroQuizProps) {
             className="space-y-2"
           >
             {q.answers.map((answer, aIndex) => (
-              <div key={aIndex} className="flex items-center space-x-2">
+              <div key={aIndex} className="flex items-center space-x-3">
                 <RadioGroupItem
                   value={String(aIndex)}
                   id={`q${qIndex}a${aIndex}`}

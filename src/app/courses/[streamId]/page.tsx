@@ -28,8 +28,9 @@ export default function StreamPage() {
         if (!user || !firestore) return null;
         return doc(firestore, "users", user.uid);
     }, [user, firestore]);
-    const { data: userProfile } = useDoc<{streak: number}>(userProfileRef);
+    const { data: userProfile } = useDoc<{streak: number, curiosityPoints: number}>(userProfileRef);
     const streak = userProfile?.streak ?? 0;
+    const points = userProfile?.curiosityPoints ?? 0;
 
     const handleSignOut = async () => {
         if (auth) {
@@ -45,7 +46,7 @@ export default function StreamPage() {
     if (!stream) {
         return (
             <div className="flex flex-col min-h-screen">
-                <Header points={streak} onSignOut={handleSignOut} onHomeClick={handleHomeClick} onHistoryClick={() => {}} />
+                <Header points={points} streak={streak} onSignOut={handleSignOut} onHomeClick={handleHomeClick} onHistoryClick={() => {}} />
                 <main className="flex-1 p-4 md:p-8 flex items-center justify-center">
                     <p>Stream not found.</p>
                 </main>
@@ -55,26 +56,26 @@ export default function StreamPage() {
 
     return (
         <div className="flex flex-col min-h-screen">
-            <Header points={streak} onSignOut={handleSignOut} onHomeClick={handleHomeClick} onHistoryClick={() => router.push('/')} />
+            <Header points={points} streak={streak} onSignOut={handleSignOut} onHomeClick={handleHomeClick} onHistoryClick={() => router.push('/')} />
             <main className="flex-1 p-4 md:p-8">
                 <div className="max-w-4xl mx-auto space-y-8">
                     <div className="text-center space-y-2">
-                        <h1 className="text-4xl font-extrabold font-headline">{stream.name}</h1>
+                        <h1 className="text-4xl font-extrabold">{stream.name}</h1>
                         <p className="text-lg text-muted-foreground">{stream.description}</p>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {stream.subjects.map((subject, index) => (
-                            <Card key={subject.id} className="flex flex-col">
+                            <Card key={subject.id} className="flex flex-col group overflow-hidden transition-all hover:shadow-lg hover:-translate-y-1">
                                 <div className="relative h-40 w-full">
                                     <Image
                                         src={`https://picsum.photos/seed/${index + 100}/${600}/${400}`}
                                         alt={subject.description}
                                         fill
-                                        className="object-cover rounded-t-lg"
+                                        className="object-cover transition-transform group-hover:scale-105"
                                         data-ai-hint={subject.imageHint}
                                     />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                                 </div>
                                 <CardHeader>
                                     <CardTitle>{subject.name}</CardTitle>
@@ -87,7 +88,7 @@ export default function StreamPage() {
                                     </div>
                                     <Link href={`/courses/${stream.id}/${subject.id}`} passHref>
                                         <Button className="w-full">
-                                            Start Learning <ArrowRight className="ml-2" />
+                                            Start Learning <ArrowRight className="ml-2 transition-transform group-hover:translate-x-1" />
                                         </Button>
                                     </Link>
                                 </CardContent>

@@ -23,7 +23,7 @@ import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase } from "@/fireb
 import AuthPage from "@/app/auth/page";
 import { signOut } from "firebase/auth";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, BookPlus } from "lucide-react";
 import { collection, doc, Timestamp, query, orderBy, limit, getDocs, writeBatch, increment } from "firebase/firestore";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
 import { JourneyHistorySidebar } from "@/components/layout/journey-history-sidebar";
@@ -65,7 +65,7 @@ type UserProfile = {
 export default function Home() {
   const [interests, setInterests] = useState<string[]>([]);
   const [journeyState, setJourneyState] = useState<JourneyState | null>(null);
-  const [isLoading, setIsLoading] = useState(true); // Start with loading true
+  const [isLoading, setIsLoading] = useState(true);
   const [showConfetti, setShowConfetti] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   
@@ -91,14 +91,17 @@ export default function Home() {
     }
 
     const processJourney = async () => {
-        setIsLoading(true);
         const pregenInterestsJSON = localStorage.getItem('pregeneratedJourneyInterests');
 
         if (pregenInterestsJSON) {
             localStorage.removeItem('pregeneratedJourneyInterests');
             const pregenInterests = JSON.parse(pregenInterestsJSON);
-            await handleInterestsSubmit(pregenInterests);
+            // Immediately set loading and clear state before starting new journey
+            setIsLoading(true);
+            setJourneyState(null);
+            await handleInterestsSubmit(pregenInterests, true);
         } else {
+            setIsLoading(true);
             // If no new journey, load the most recent one.
             const journeysRef = collection(firestore, "users", user.uid, "learning_journeys");
             const q = query(journeysRef, orderBy("startDate", "desc"), limit(1));
@@ -131,16 +134,18 @@ export default function Home() {
 }, [isUserLoading, user, firestore]);
 
   const startNewJourney = () => {
+    setIsLoading(true);
     setInterests([]);
     setJourneyState(null);
     setIsLoading(false);
   };
   
-  const handleInterestsSubmit = async (submittedInterests: string[]) => {
+  const handleInterestsSubmit = async (submittedInterests: string[], fromPregen = false) => {
     if (!user || !firestore) return;
     
-    // Explicitly set loading state and clear old state
-    setIsLoading(true);
+    if (!fromPregen) {
+      setIsLoading(true);
+    }
     setJourneyState(null); 
     setInterests(submittedInterests);
 
@@ -294,7 +299,13 @@ export default function Home() {
     batch.update(topicRef, { quizScore: score });
 
     const pointsToAdd = correctAnswers * 10;
-    batch.update(userProfileRef, { curiosityPoints: increment(pointsToAdd) });
+    if (pointsToAdd > 0) {
+        batch.update(userProfileRef, { curiosityPoints: increment(pointsToAdd) });
+        toast({
+            title: "Points Earned!",
+            description: `You've earned ${pointsToAdd} curiosity points!`,
+        });
+    }
 
     batch.commit().catch(err => {
         console.error("Error updating score and points", err);
@@ -362,10 +373,10 @@ export default function Home() {
       }
 
       return (
-        <div className="space-y-8">
-          <Card>
+        <div className="space-y-6">
+          <Card className="bg-card/50">
             <CardHeader>
-                <CardTitle className="text-2xl font-bold font-headline">{journey.title}</CardTitle>
+                <CardTitle className="text-2xl font-bold">{journey.title}</CardTitle>
                 <CardDescription>Day {day} of {journey.totalDays} in your learning journey.</CardDescription>
             </CardHeader>
           </Card>
@@ -381,23 +392,24 @@ export default function Home() {
           
           {quizScore !== null && (
              <Card>
-             <CardHeader>
+             <CardHeader className="text-center">
                <CardTitle>End of Day {day}</CardTitle>
              </CardHeader>
-             <CardContent>
+             <CardContent className="flex flex-col items-center gap-4">
                {isLastDay ? (
-                 <p>Congratulations! You have completed your learning journey on "{journey.title}".</p>
+                 <p className="text-muted-foreground">Congratulations! You have completed your learning journey on "{journey.title}".</p>
                ) : (
-                 <p>You've completed today's topic. Come back tomorrow to continue your journey!</p>
+                 <p className="text-muted-foreground">You've completed today's topic. Come back tomorrow to continue your journey!</p>
                )}
-               <div className="mt-6 flex gap-4">
+               <div className="mt-2 flex flex-wrap justify-center gap-4">
                  {!isLastDay && (
-                   <Button onClick={advanceToNextDay} disabled={isLoading}>
-                      {isLoading ? 'Loading Next Day...' : `Continue to Day ${day + 1}`}
+                   <Button onClick={advanceToNextDay} disabled={isLoading} size="lg">
+                      {isLoading ? 'Loading...' : `Continue to Day ${day + 1}`}
                       <ArrowRight className="ml-2" />
                    </Button>
                  )}
-                  <Button variant="outline" onClick={startNewJourney}>
+                  <Button variant="outline" onClick={startNewJourney} size="lg">
+                    <BookPlus className="mr-2"/>
                     Start a New Journey
                   </Button>
                </div>

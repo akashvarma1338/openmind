@@ -49,13 +49,13 @@ function SubjectPage({ onStartJourney }: SubjectPageProps) {
               data-ai-hint={subject.imageHint}
               priority
           />
-           <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent" />
+           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
        </div>
     <CardHeader className="text-center -mt-20 z-10 relative">
-      <CardTitle className="text-4xl font-extrabold font-headline">
+      <CardTitle className="text-3xl md:text-4xl font-extrabold">
         {subject.name}
       </CardTitle>
-      <CardDescription className="text-lg max-w-2xl mx-auto">
+      <CardDescription className="text-lg max-w-2xl mx-auto text-muted-foreground">
         {subject.description}
       </CardDescription>
     </CardHeader>
@@ -64,7 +64,7 @@ function SubjectPage({ onStartJourney }: SubjectPageProps) {
             Ready to dive in? Start your personalized learning journey on this topic.
         </p>
       <div className="flex justify-center">
-        <Button onClick={handleStart} size="lg" className="text-lg">
+        <Button onClick={handleStart} size="lg" className="text-lg font-semibold">
           <Sparkles className="mr-2 h-5 w-5" />
           Start My Journey
         </Button>
@@ -86,8 +86,9 @@ export default function SubjectPageWrapper() {
         if (!user || !firestore) return null;
         return doc(firestore, "users", user.uid);
     }, [user, firestore]);
-    const { data: userProfile } = useDoc<{streak: number}>(userProfileRef);
+    const { data: userProfile } = useDoc<{streak: number, curiosityPoints: number}>(userProfileRef);
     const streak = userProfile?.streak ?? 0;
+    const points = userProfile?.curiosityPoints ?? 0;
 
     // This is a placeholder function that will be replaced by the real one from the main page
     // The user will be redirected to the main page to actually start the journey
@@ -118,7 +119,7 @@ export default function SubjectPageWrapper() {
 
     return (
         <div className="flex flex-col min-h-screen">
-          <Header points={streak} onSignOut={handleSignOut} onHomeClick={handleHomeClick} />
+          <Header points={points} streak={streak} onSignOut={handleSignOut} onHomeClick={handleHomeClick} onHistoryClick={() => router.push('/')} />
           <main className="flex-1 p-4 md:p-8 flex items-center justify-center">
             <div className="w-full max-w-3xl">
                 <SubjectPage onStartJourney={handleStartJourney} />

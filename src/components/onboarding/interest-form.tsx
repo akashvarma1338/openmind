@@ -54,25 +54,25 @@ export function InterestForm({ onInterestsSubmit }: InterestFormProps) {
   const heroImage = PlaceHolderImages.find(p => p.id === 'interest-profiler-hero');
 
   return (
-    <Card className="overflow-hidden">
+    <Card className="w-full max-w-2xl mx-auto border-0 md:border md:shadow-lg">
       {heroImage && (
          <div className="relative h-48 w-full">
             <Image
                 src={heroImage.imageUrl}
                 alt={heroImage.description}
                 fill
-                className="object-cover"
+                className="object-cover rounded-t-lg"
                 data-ai-hint={heroImage.imageHint}
                 priority
             />
-             <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent" />
+             <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
          </div>
       )}
-      <CardHeader className="text-center -mt-20 z-10 relative">
-        <CardTitle className="text-4xl font-extrabold font-headline">
+      <CardHeader className="text-center -mt-16 z-10 relative">
+        <CardTitle className="text-3xl md:text-4xl font-extrabold">
           Welcome to OpenMind
         </CardTitle>
-        <CardDescription className="text-lg">
+        <CardDescription className="text-lg text-muted-foreground">
           Turn any interest into a personalized learning journey.
         </CardDescription>
       </CardHeader>
@@ -84,7 +84,7 @@ export function InterestForm({ onInterestsSubmit }: InterestFormProps) {
               name="interests"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-base">What are you curious about?</FormLabel>
+                  <FormLabel className="text-base font-semibold">What are you curious about?</FormLabel>
                   <FormControl>
                     <Input
                       placeholder="e.g., The Roman Empire, sci-fi movies, black holes..."
@@ -101,7 +101,7 @@ export function InterestForm({ onInterestsSubmit }: InterestFormProps) {
               )}
             />
             <div className="flex justify-center">
-              <Button type="submit" size="lg" className="text-lg">
+              <Button type="submit" size="lg" className="text-lg font-semibold">
                 <Sparkles className="mr-2 h-5 w-5" />
                 Ignite My Curiosity
               </Button>

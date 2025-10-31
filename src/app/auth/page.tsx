@@ -91,7 +91,7 @@ export default function AuthPage() {
       <div className="mx-auto w-full max-w-md space-y-6">
         <div className="flex flex-col items-center text-center">
             <Logo className="h-12 w-12 text-primary" />
-            <h1 className="text-3xl font-bold font-headline mt-4">
+            <h1 className="text-3xl font-bold mt-4">
                 Welcome to OpenMind
             </h1>
             <p className="text-muted-foreground mt-2">

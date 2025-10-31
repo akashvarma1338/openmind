@@ -41,24 +41,24 @@ export function DailyJourneyDisplay({
   }
 
   return (
-    <div className="space-y-8">
-      <Card className="overflow-hidden">
-        <CardHeader className="bg-primary/10">
-          <CardTitle className="flex items-center gap-3 text-2xl font-bold font-headline text-primary">
+    <div className="space-y-6">
+      <Card className="overflow-hidden border-primary/20 bg-primary/5">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-3 text-2xl font-bold text-primary">
             <Lightbulb className="h-8 w-8" />
             Your Daily Topic
           </CardTitle>
           <CardDescription>{topic.reason}</CardDescription>
         </CardHeader>
-        <CardContent className="p-6">
-          <h2 className="text-3xl font-bold">{topic.topic}</h2>
+        <CardContent className="p-6 pt-2">
+          <h2 className="text-3xl font-bold text-foreground">{topic.topic}</h2>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-3 text-xl font-headline">
-            <BookOpen className="h-6 w-6 text-accent" />
+          <CardTitle className="flex items-center gap-3 text-xl font-bold">
+            <BookOpen className="h-6 w-6 text-primary" />
             Curated Reading
           </CardTitle>
           <CardDescription>
@@ -75,7 +75,7 @@ export function DailyJourneyDisplay({
           ) : (
             <div className="space-y-6">
               {material?.articles.map((article, index) => (
-                <div key={index} className="space-y-2">
+                <div key={index} className="space-y-2 group">
                   <h3 className="font-semibold text-lg">{article.title}</h3>
                   <p className="text-muted-foreground leading-relaxed">
                     {article.explanation}
@@ -84,9 +84,9 @@ export function DailyJourneyDisplay({
                     href={article.link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-sm text-primary hover:underline"
+                    className="flex items-center gap-2 text-sm text-primary font-semibold hover:underline"
                   >
-                    <LinkIcon className="h-4 w-4" />
+                    <LinkIcon className="h-4 w-4 transition-transform group-hover:rotate-[-15deg]" />
                     Read more
                   </a>
                 </div>
@@ -98,8 +98,8 @@ export function DailyJourneyDisplay({
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-3 text-xl font-headline">
-            <ListChecks className="h-6 w-6 text-accent" />
+          <CardTitle className="flex items-center gap-3 text-xl font-bold">
+            <ListChecks className="h-6 w-6 text-primary" />
             Knowledge Check
           </CardTitle>
           <CardDescription>
@@ -127,7 +127,7 @@ export function DailyJourneyDisplay({
 
 function JourneySkeleton() {
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <Card>
         <CardHeader>
           <Skeleton className="h-8 w-1/2" />
