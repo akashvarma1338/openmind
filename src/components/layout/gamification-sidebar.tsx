@@ -1,6 +1,3 @@
-
-
-
 import {
   Card,
   CardContent,
@@ -17,10 +14,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Trophy, Flame } from "lucide-react";
-import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, query, where, orderBy, limit } from "firebase/firestore";
+import { useUser, useFirestore } from "@/firebase";
+import { collection, query, where, orderBy, limit, getDocs } from "firebase/firestore";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Skeleton } from "../ui/skeleton";
+import { useEffect, useState } from "react";
 
 type GamificationSidebarProps = {
   userStreak: number;
@@ -37,29 +35,47 @@ type LeaderboardUser = {
 export function GamificationSidebar({ userStreak, journeyTitle }: GamificationSidebarProps) {
   const { user } = useUser();
   const firestore = useFirestore();
+  const [leaderboard, setLeaderboard] = useState<LeaderboardUser[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const pointsQuery = useMemoFirebase(() => {
+  useEffect(() => {
     if (!firestore || !journeyTitle) {
-      return null;
+        setLeaderboard([]);
+        return;
     }
-    // Query the `curiosity_points` collection directly, filtering by the denormalized journeyTitle
-    return query(
-      collection(firestore, 'curiosity_points'),
-      where('journeyTitle', '==', journeyTitle),
-      orderBy('streak', 'desc'),
-      limit(10)
-    );
+
+    const buildLeaderboard = async () => {
+        setIsLoading(true);
+        try {
+            const pointsQuery = query(
+                collection(firestore, 'curiosity_points'),
+                where('journeyTitle', '==', journeyTitle),
+                orderBy('streak', 'desc'),
+                limit(10)
+            );
+
+            const querySnapshot = await getDocs(pointsQuery);
+            const streaks = querySnapshot.docs.map(doc => ({ userId: doc.id, ...doc.data() } as { userId: string, userName: string, streak: number }));
+            
+            const leaderboardData: LeaderboardUser[] = streaks.map((streakEntry, index) => ({
+                rank: index + 1,
+                id: streakEntry.userId,
+                name: streakEntry.userName || "Anonymous",
+                streak: streakEntry.streak,
+            }));
+
+            setLeaderboard(leaderboardData);
+
+        } catch (error) {
+            console.error("Error building leaderboard:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    }
+
+    buildLeaderboard();
+
   }, [firestore, journeyTitle]);
-
-  const { data: streaks, isLoading } = useCollection<{ userId: string, userName: string, streak: number }>(pointsQuery);
-
-  const leaderboard: LeaderboardUser[] = (streaks || [])
-    .map((streakEntry, index) => ({
-      rank: index + 1,
-      id: streakEntry.userId,
-      name: streakEntry.userName || "Anonymous",
-      streak: streakEntry.streak,
-    }));
   
   return (
     <Card>
@@ -121,5 +137,3 @@ export function GamificationSidebar({ userStreak, journeyTitle }: GamificationSi
     </Card>
   );
 }
-
-    

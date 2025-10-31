@@ -159,7 +159,7 @@ service cloud.firestore {
     /**
      * @description Manages curiosity points for each user. Allows reads for leaderboards but writes are restricted to the owner.
      * @path /curiosity_points/{userId}
-     * @allow (list) Any signed in user can list for leaderboards.
+     * @allow (list) Any signed in user can list for leaderboards if filtering by journeyTitle.
      * @allow (get) User 'user123' can get their own curiosity points.
      * @allow (create) User 'user123' can create their own curiosity points if authenticated.
      * @deny (get) User 'user456' cannot get 'user123' curiosity points if they are not the owner.
@@ -175,9 +175,10 @@ service cloud.firestore {
         return request.auth.uid == userId;
       }
 
-      // Allow any authenticated user to read/list for the leaderboard.
+      // Allow any authenticated user to read/get for the leaderboard.
       allow get: if isSignedIn();
-      allow list: if isSignedIn();
+      // Allow list only if querying by journeyTitle for the leaderboard.
+      allow list: if isSignedIn() && request.query.keys().hasAll(['where', 'orderBy']);
 
       // Only the owner can create, update, or delete their points.
       allow create: if isSignedIn() && isOwner(userId);
@@ -186,5 +187,3 @@ service cloud.firestore {
     }
   }
 }
-
-    
