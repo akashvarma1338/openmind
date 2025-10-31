@@ -23,7 +23,7 @@ import AuthPage from "@/app/auth/page";
 import { signOut } from "firebase/auth";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ArrowRight } from "lucide-react";
-import { doc } from "firebase/firestore";
+import { doc, Timestamp } from "firebase/firestore";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
 
 type JourneyState = {
@@ -35,6 +35,12 @@ type JourneyState = {
   day: number;
   isCompleted: boolean;
 };
+
+const isSameDay = (date1: Date, date2: Date) => {
+    return date1.getFullYear() === date2.getFullYear() &&
+           date1.getMonth() === date2.getMonth() &&
+           date1.getDate() === date2.getDate();
+}
 
 export default function Home() {
   const [interests, setInterests] = useState<string[]>([]);
@@ -49,7 +55,8 @@ export default function Home() {
     if (!user || !firestore) return null;
     return doc(firestore, "curiosity_points", user.uid);
   }, [user, firestore]);
-  const { data: userStreakDoc } = useDoc<{streak: number}>(userStreakRef);
+
+  const { data: userStreakDoc } = useDoc<{streak: number, timestamp: Timestamp}>(userStreakRef);
   const streak = userStreakDoc?.streak ?? 0;
 
   const startNewJourney = () => {
@@ -121,13 +128,19 @@ export default function Home() {
       });
 
       const currentStreak = userStreakDoc?.streak || 0;
+      const lastUpdate = userStreakDoc?.timestamp?.toDate();
+      const now = new Date();
 
-      const streakDocRef = doc(firestore, 'curiosity_points', user.uid);
-      setDocumentNonBlocking(streakDocRef, {
-        userId: user.uid,
-        streak: currentStreak + 1,
-        timestamp: new Date()
-      }, { merge: true });
+      let newStreak = currentStreak;
+      if (!lastUpdate || !isSameDay(lastUpdate, now)) {
+        newStreak = currentStreak + 1;
+        const streakDocRef = doc(firestore, 'curiosity_points', user.uid);
+        setDocumentNonBlocking(streakDocRef, {
+          userId: user.uid,
+          streak: newStreak,
+          timestamp: now
+        }, { merge: true });
+      }
       
       setJourneyState(prev => ({
         ...prev!,
