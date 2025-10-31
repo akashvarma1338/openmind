@@ -191,7 +191,7 @@ export default function Home() {
     setIsLoading(true);
     try {
       const { journey, currentTopic } = journeyState;
-      if (!currentTopic) return;
+      if (!currentTopic || !journey) return;
 
       const nextTopicAI = await generateDailyTopic({
         interests, // Assuming interests are still in scope or fetched with journey
@@ -243,11 +243,13 @@ export default function Home() {
       
       await batch.commit();
 
-      setJourneyState(prev => ({
-        ...prev!,
-        journey: { ...prev!.journey!, topicIds: [...prev!.journey!.topicIds, newTopicRef.id]},
-        currentTopic: { ...newTopic, id: newTopicRef.id },
-      }));
+      setJourneyState(prev => {
+        if (!prev || !prev.journey) return prev;
+        return {
+          journey: { ...prev.journey, topicIds: [...prev.journey.topicIds, newTopicRef.id]},
+          currentTopic: { ...newTopic, id: newTopicRef.id },
+        }
+      });
 
     } catch (error) {
       console.error("Failed to advance to next day:", error);
