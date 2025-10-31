@@ -11,6 +11,7 @@ import { ProfileForm, type ProfileFormData } from '@/components/profile/profile-
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { useToast } from '@/hooks/use-toast';
+import AuthPage from '../auth/page';
 
 export default function ProfilePage() {
   const { user, isUserLoading } = useUser();
@@ -60,10 +61,15 @@ export default function ProfilePage() {
     });
   };
 
-  if (isUserLoading || !user) {
+  if (isUserLoading || !user || isProfileLoading) {
     // Show a loading spinner while checking auth state or redirecting
     return <LoadingSpinner />;
   }
+
+  if (!user && !isUserLoading) {
+    return <AuthPage />;
+  }
+
 
   return (
     <div className="flex flex-col min-h-screen">

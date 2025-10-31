@@ -1,6 +1,6 @@
 import { Logo } from "@/components/common/icons";
 import { Button } from "../ui/button";
-import { Flame, LogOut, Home, User, BookMarked, History, Sparkles } from "lucide-react";
+import { Flame, LogOut, Home, User, BookMarked, History, Sparkles, Trophy } from "lucide-react";
 import Link from "next/link";
 import {
   DropdownMenu,
@@ -59,6 +59,12 @@ export function Header({ streak, points, onSignOut, onHomeClick, onHistoryClick 
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
+
+          <Link href="/leaderboard" passHref>
+            <Button variant="ghost" size="icon" aria-label="Leaderboard">
+                <Trophy className="h-5 w-5" />
+            </Button>
+          </Link>
 
           <Link href="/profile" passHref>
             <Button variant="ghost" size="icon" aria-label="Profile">
