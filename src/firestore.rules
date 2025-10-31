@@ -13,6 +13,7 @@ service cloud.firestore {
       }
 
       allow get: if isOwner();
+      // Users should not be able to list all other users.
       allow list: if false;
 
       allow create: if isSignedIn() && isOwner() && request.resource.data.id == userId;
@@ -21,18 +22,26 @@ service cloud.firestore {
 
         match /learning_journeys/{journeyId} {
           allow get, list: if isOwner();
-          allow create, update, delete: if isSignedIn() && isOwner() && resource != null;
+          allow create, update, delete: if isSignedIn() && isOwner();
 
             match /topics/{topicId} {
               allow get, list: if isOwner();
-              allow create, update, delete: if isSignedIn() && isOwner() && resource != null;
+              allow create, update, delete: if isSignedIn() && isOwner();
 
                 match /quizzes/{quizId} {
                   allow get, list: if isOwner();
-                  allow create, update, delete: if isSignedIn() && isOwner() && resource != null;
+                  allow create, update, delete: if isSignedIn() && isOwner();
                 }
             }
         }
+    }
+
+    // This collection is no longer used for the leaderboard,
+    // but the rules are kept for potential future use.
+    // The leaderboard now queries the /users collection directly.
+    match /curiosity_points/{pointId} {
+       allow get, list: if isSignedIn();
+       allow write: if request.auth.uid == pointId;
     }
   }
 }

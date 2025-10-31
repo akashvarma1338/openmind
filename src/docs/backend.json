@@ -41,10 +41,6 @@
           "type": "string",
           "description": "The user's level (Beginner, Intermediate, Advanced).",
           "enum": ["Beginner", "Intermediate", "Advanced"]
-        },
-        "curiosityPoints": {
-            "type": "number",
-            "description": "Points earned by the user for completing exercises."
         }
       },
       "required": [

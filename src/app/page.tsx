@@ -59,7 +59,6 @@ type JourneyState = {
 
 type UserProfile = {
     streak: number;
-    curiosityPoints: number;
 }
 
 export default function Home() {
@@ -79,27 +78,28 @@ export default function Home() {
     return doc(firestore, "users", user.uid);
   }, [user, firestore]);
   const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
-  const curiosityPoints = userProfile?.curiosityPoints ?? 0;
+  const streak = userProfile?.streak ?? 0;
 
-  // This effect handles both starting a new journey and loading the most recent one.
   useEffect(() => {
     if (isUserLoading || !user || !firestore) return;
-
+  
     const loadJourney = async () => {
-      // Priority 1: Check if a pre-generated journey needs to be started.
+      // Check for a pre-generated journey first.
       const pregenInterestsJSON = localStorage.getItem('pregeneratedJourneyInterests');
       if (pregenInterestsJSON) {
         localStorage.removeItem('pregeneratedJourneyInterests');
         const pregenInterests = JSON.parse(pregenInterestsJSON);
+        
         if (pregenInterests && pregenInterests.length > 0) {
-            setIsLoading(true);
-            setJourneyState(null);
-            await handleInterestsSubmit(pregenInterests);
-            return;
+          // Immediately set loading state and clear old state before starting the new journey
+          setIsLoading(true);
+          setJourneyState(null);
+          await handleInterestsSubmit(pregenInterests);
+          return; // Exit after starting the new journey
         }
       }
-
-      // Priority 2: If no new journey was started, load the most recent one.
+  
+      // If no new journey, load the most recent one.
       setIsLoading(true);
       const journeysRef = collection(firestore, "users", user.uid, "learning_journeys");
       const q = query(journeysRef, orderBy("startDate", "desc"), limit(1));
@@ -108,26 +108,27 @@ export default function Home() {
       if (!querySnapshot.empty) {
         const journeyDoc = querySnapshot.docs[0];
         const journeyData = { id: journeyDoc.id, ...journeyDoc.data() } as Journey;
-
+  
         const topicsRef = collection(firestore, "users", user.uid, "learning_journeys", journeyData.id, "topics");
         const topicsQuery = query(topicsRef, orderBy("day", "desc"), limit(1));
         const topicsSnapshot = await getDocs(topicsQuery);
-
+  
         if (!topicsSnapshot.empty) {
-            const topicDoc = topicsSnapshot.docs[0];
-            const topicData = { id: topicDoc.id, ...topicDoc.data() } as Topic;
-            setJourneyState({ journey: journeyData, currentTopic: topicData });
+          const topicDoc = topicsSnapshot.docs[0];
+          const topicData = { id: topicDoc.id, ...topicDoc.data() } as Topic;
+          setJourneyState({ journey: journeyData, currentTopic: topicData });
         } else {
-            setJourneyState({ journey: journeyData, currentTopic: null });
+          setJourneyState({ journey: journeyData, currentTopic: null });
         }
       } else {
-        setJourneyState(null);
+        setJourneyState(null); // No journeys exist
       }
       setIsLoading(false);
     };
-
+  
     loadJourney();
-  }, [isUserLoading, user, firestore]);
+  
+  }, [isUserLoading, user, firestore]); // Dependency on firestore is correct here
 
   const startNewJourney = () => {
     setInterests([]);
@@ -138,6 +139,7 @@ export default function Home() {
   const handleInterestsSubmit = async (submittedInterests: string[]) => {
     if (!user || !firestore) return;
     
+    // Explicitly set loading state and clear old state
     setIsLoading(true);
     setJourneyState(null); 
     setInterests(submittedInterests);
@@ -190,6 +192,11 @@ export default function Home() {
 
     } catch (error) {
       console.error("Failed to generate learning journey:", error);
+      toast({
+        variant: "destructive",
+        title: "Journey Creation Failed",
+        description: "There was an error creating your new learning journey. Please try again."
+      });
     } finally {
       setIsLoading(false);
     }
@@ -259,6 +266,11 @@ export default function Home() {
 
     } catch (error) {
       console.error("Failed to advance to next day:", error);
+      toast({
+        variant: "destructive",
+        title: "Progression Failed",
+        description: "There was an error advancing to the next day. Please try again."
+      });
     } finally {
       setIsLoading(false);
     }
@@ -278,10 +290,6 @@ export default function Home() {
     
     const topicRef = doc(firestore, "users", user.uid, "learning_journeys", journeyState.journey.id, "topics", journeyState.currentTopic.id);
     setDocumentNonBlocking(topicRef, { quizScore: score }, { merge: true });
-    
-    // Update curiosity points
-    const newPoints = (userProfile?.curiosityPoints || 0) + Math.round(score);
-    updateDocumentNonBlocking(userProfileRef, { curiosityPoints: newPoints });
 
     setJourneyState(prev => {
       if (!prev || !prev.currentTopic) return prev;
@@ -397,7 +405,7 @@ export default function Home() {
     <div className="flex flex-col min-h-screen">
       <ConfettiCelebration active={showConfetti} onComplete={() => setShowConfetti(false)} />
       <Header 
-        points={curiosityPoints} 
+        streak={streak} 
         onSignOut={handleSignOut} 
         onHomeClick={startNewJourney}
         onHistoryClick={() => setIsHistoryOpen(true)}
