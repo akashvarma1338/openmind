@@ -46,7 +46,7 @@ const prompt = ai.definePrompt({
   The topic should build on previous knowledge but be digestible in a single day.
   Mark "isFirstDay" as false. If you feel this is the final topic to conclude the journey, mark "isLastDay" as true.
   {{else}}
-  This is the start of a new journey. Generate a broad, engaging title for a learning journey based on the user's interests. The title should be open-ended and not mention a specific duration (e.g., avoid phrases like "in 5 days").
+  This is the start of a new journey. Generate a broad, engaging title for a learning journey based on the user's interests. The title should be open-ended and MUST NOT mention a specific duration (e.g., absolutely no phrases like "in 5 days", "in a week", etc.).
   Then, generate the very first daily learning topic for Day 1 of this new journey.
   Mark "isFirstDay" as true and "isLastDay" as false.
   {{/if}}
