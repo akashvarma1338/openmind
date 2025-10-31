@@ -8,6 +8,7 @@ import {
 } from "@/firebase/non-blocking-login";
 import { Logo } from "@/components/common/icons";
 import { doc } from "firebase/firestore";
+import { useToast } from "@/hooks/use-toast";
 
 type AuthData = {
     email: string;
@@ -21,6 +22,7 @@ export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
   const auth = useAuth();
   const firestore = useFirestore();
+  const { toast } = useToast();
 
   const handleAuth = (data: AuthData) => {
     if (!auth || !firestore) return;
@@ -41,9 +43,27 @@ export default function AuthPage() {
               }
               const userDocRef = doc(firestore, "users", user.uid);
               setDocumentNonBlocking(userDocRef, userProfile, { merge: true });
-              // Switch to login view after successful signup
+              toast({
+                  title: "Account Created",
+                  description: "You can now sign in with your new account.",
+              });
               setIsLogin(true); 
           }
+      }).catch(error => {
+        if(error.code === 'auth/email-already-in-use') {
+            toast({
+                variant: 'destructive',
+                title: 'Email Already In Use',
+                description: 'This email is already registered. Please sign in.',
+            });
+            setIsLogin(true);
+        } else {
+            toast({
+                variant: 'destructive',
+                title: 'Registration Failed',
+                description: error.message,
+            });
+        }
       });
     }
   };
