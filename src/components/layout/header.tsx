@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { streams } from "@/lib/pregenerated-courses";
+import { ThemeToggle } from "../common/theme-toggle";
 
 type HeaderProps = {
   streak: number;
@@ -33,6 +34,7 @@ export function Header({ streak, points, onSignOut, onHomeClick, onHistoryClick 
           </button>
         </div>
         <div className="flex items-center gap-2 md:gap-4">
+          <ThemeToggle />
           <Button variant="ghost" size="icon" onClick={onHomeClick} aria-label="Home">
             <Home className="h-5 w-5" />
           </Button>
