@@ -3,7 +3,7 @@ export type LeaderboardEntry = {
   name: string;
   streak: number;
 };
-
+// This file is no longer in use, but is kept for reference.
 export const leaderboardData: Omit<LeaderboardEntry, "rank">[] = [
   { name: 'CuriousGeorge', streak: 145 },
   { name: 'LearnMachine', streak: 132 },
