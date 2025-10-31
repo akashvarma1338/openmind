@@ -166,7 +166,7 @@ service cloud.firestore {
      * @deny (update) User 'user456' cannot update 'user123' curiosity points.
      * @principle Enforces document ownership for writes, but allows listing for game mechanics.
      */
-    match /curiosity_points/{userId} {
+    match /curiosity_points/{pointId} {
       function isSignedIn() {
         return request.auth != null;
       }
@@ -177,13 +177,15 @@ service cloud.firestore {
 
       // Allow any authenticated user to read/get for the leaderboard.
       allow get: if isSignedIn();
-      // Allow any authenticated user to list for the leaderboard.
+      // Allow any authenticated user to list for the leaderboard, as it's public-facing data.
       allow list: if isSignedIn();
 
       // Only the owner can create, update, or delete their points.
-      allow create: if isSignedIn() && isOwner(userId);
-      allow update: if isSignedIn() && isOwner(userId) && resource != null;
-      allow delete: if isSignedIn() && isOwner(userId) && resource != null;
+      allow create: if isSignedIn() && isOwner(pointId);
+      allow update: if isSignedIn() && isOwner(pointId) && resource != null;
+      allow delete: if isSignedIn() && isOwner(pointId) && resource != null;
     }
   }
 }
+
+    

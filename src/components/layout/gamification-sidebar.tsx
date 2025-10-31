@@ -1,3 +1,4 @@
+
 import {
   Card,
   CardContent,
@@ -15,7 +16,7 @@ import {
 } from "@/components/ui/table";
 import { Trophy, Flame } from "lucide-react";
 import { useUser, useFirestore, errorEmitter, FirestorePermissionError } from "@/firebase";
-import { collection, query, where, limit, getDocs } from "firebase/firestore";
+import { collection, query, where, getDocs } from "firebase/firestore";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Skeleton } from "../ui/skeleton";
 import { useEffect, useState } from "react";
@@ -49,8 +50,7 @@ export function GamificationSidebar({ userStreak, journeyTitle }: GamificationSi
         try {
             const pointsQuery = query(
                 collection(firestore, 'curiosity_points'),
-                where('journeyTitle', '==', journeyTitle),
-                limit(50) // Limit to a reasonable number for client-side sort
+                where('journeyTitle', '==', journeyTitle)
             );
 
             const querySnapshot = await getDocs(pointsQuery);
@@ -150,3 +150,5 @@ export function GamificationSidebar({ userStreak, journeyTitle }: GamificationSi
     </Card>
   );
 }
+
+    
