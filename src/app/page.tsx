@@ -90,7 +90,7 @@ export default function Home() {
         const pregenInterests = JSON.parse(pregenInterestsJSON);
         if (pregenInterests && pregenInterests.length > 0) {
             await handleInterestsSubmit(pregenInterests, true);
-            setIsLoading(false);
+            // isLoading is handled inside handleInterestsSubmit for this case
             return;
         }
       }
@@ -129,6 +129,8 @@ export default function Home() {
   
   const handleInterestsSubmit = async (submittedInterests: string[], fromPregen = false) => {
     if (isLoading || !user || !firestore) return;
+    
+    // Manage loading state. If it's a pre-generated journey, it's already true.
     if (!fromPregen) {
         setIsLoading(true);
     }
@@ -188,9 +190,8 @@ export default function Home() {
     } catch (error) {
       console.error("Failed to generate learning journey:", error);
     } finally {
-        if (!fromPregen) {
-            setIsLoading(false);
-        }
+      // Only set loading to false here, to ensure it covers the entire async operation.
+      setIsLoading(false);
     }
   };
 
@@ -312,7 +313,7 @@ export default function Home() {
   }
 
   const renderJourneyContent = () => {
-    if (isLoading && !journeyState) {
+    if (isLoading) {
       return <LoadingSpinner />;
     }
     
@@ -325,10 +326,6 @@ export default function Home() {
     }
 
     const { journey, currentTopic } = journeyState;
-
-    if (isLoading && !currentTopic) {
-      return <DailyJourneyDisplay isLoading={true} topic={null} material={null} quiz={null} score={null} onQuizSubmit={() => {}} />;
-    }
     
     if (journey && currentTopic) {
       const { readingMaterial, quiz, quizScore, day, title, reason, isLastDay } = currentTopic;
