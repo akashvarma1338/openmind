@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/table";
 import { Trophy, Flame } from "lucide-react";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, collectionGroup, query, where, orderBy, limit } from "firebase/firestore";
+import { collection, collectionGroup, query, where, orderBy, limit, getDocs } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Skeleton } from "../ui/skeleton";
@@ -50,51 +50,66 @@ export function GamificationSidebar({ userStreak, journeyTitle }: GamificationSi
 
   const { data: journeys, isLoading: journeysLoading } = useCollection<{id: string, _path: {segments: string[]}}>(journeysQuery);
 
-  // Step 2: Use the user IDs from those journeys to query the `curiosity_points` collection
-  const pointsQuery = useMemoFirebase(() => {
-    if (!firestore || !journeys) return null;
-    
-    // Handle the case where there are no journeys for this title yet.
-    if (journeys.length === 0) return "EMPTY"; 
-
-    // Extract user IDs from the parent path of the journey documents
-    const userIds = journeys.map(j => j._path.segments[1]).filter(Boolean) as string[];
-    
-    // Firestore 'in' queries are limited to 30 items. If you expect more, you'll need pagination.
-    if (userIds.length === 0) return "EMPTY";
-    
-    return query(
-        collection(firestore, 'curiosity_points'), 
-        where('userId', 'in', userIds.slice(0, 30)),
-        orderBy('streak', 'desc'),
-        limit(10)
-    );
-  }, [firestore, journeys]);
-
-  const { data: streaks, isLoading: streaksLoading } = useCollection<{userId: string, userName: string, streak: number}>(
-    pointsQuery === "EMPTY" ? null : pointsQuery
-  );
-
-  // Step 3: Process the data to build the leaderboard
+  // Step 2: Use the user IDs from those journeys to query the `curiosity_points` collection and build leaderboard
   useEffect(() => {
-    setIsLoading(journeysLoading || streaksLoading);
+    const buildLeaderboard = async () => {
+        if (!firestore || !journeys) {
+            if(!journeysLoading) {
+                setLeaderboard([]);
+                setIsLoading(false);
+            } else {
+                setIsLoading(true);
+            }
+            return;
+        }
 
-    if (streaks) {
-        const rankedList = streaks
-            .map((streakEntry, index) => ({
-                rank: index + 1,
-                id: streakEntry.userId,
-                name: streakEntry.userName || "Anonymous", // Use denormalized name
-                streak: streakEntry.streak,
-            }))
-            .sort((a,b) => b.streak - a.streak)
-            .map((user, index) => ({...user, rank: index + 1}));
+        setIsLoading(true);
 
-        setLeaderboard(rankedList);
-    } else if (pointsQuery === "EMPTY") {
-        setLeaderboard([]);
-    }
-  }, [streaks, journeysLoading, streaksLoading, pointsQuery]);
+        if (journeys.length === 0) {
+            setLeaderboard([]);
+            setIsLoading(false);
+            return;
+        }
+
+        const userIds = journeys.map(j => j._path.segments[1]).filter(Boolean) as string[];
+        if (userIds.length === 0) {
+            setLeaderboard([]);
+            setIsLoading(false);
+            return;
+        }
+        
+        const pointsQuery = query(
+            collection(firestore, 'curiosity_points'), 
+            where('userId', 'in', userIds.slice(0, 30)),
+            orderBy('streak', 'desc'),
+            limit(10)
+        );
+
+        try {
+            const streakSnapshot = await getDocs(pointsQuery);
+            const streaks = streakSnapshot.docs.map(doc => doc.data() as {userId: string, userName: string, streak: number});
+
+            const rankedList = streaks
+                .map((streakEntry, index) => ({
+                    rank: index + 1,
+                    id: streakEntry.userId,
+                    name: streakEntry.userName || "Anonymous",
+                    streak: streakEntry.streak,
+                }))
+                .sort((a,b) => b.streak - a.streak)
+                .map((user, index) => ({...user, rank: index + 1}));
+
+            setLeaderboard(rankedList);
+        } catch (error) {
+            console.error("Error fetching leaderboard streaks:", error);
+            setLeaderboard([]);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+    
+    buildLeaderboard();
+  }, [firestore, journeys, journeysLoading]);
   
   return (
     <Card>
