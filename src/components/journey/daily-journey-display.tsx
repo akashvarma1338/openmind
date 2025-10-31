@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MicroQuiz } from "./micro-quiz";
-import { BookOpen, Lightbulb, ListChecks } from "lucide-react";
+import { BookOpen, Lightbulb, ListChecks, LinkIcon } from "lucide-react";
 import { Separator } from "../ui/separator";
 
 type DailyJourneyDisplayProps = {
@@ -67,16 +67,29 @@ export function DailyJourneyDisplay({
         </CardHeader>
         <CardContent>
           {isLoading && !material ? (
-            <div className="space-y-2">
+            <div className="space-y-4">
+              <Skeleton className="h-6 w-3/4" />
               <Skeleton className="h-4 w-full" />
               <Skeleton className="h-4 w-[80%]" />
             </div>
           ) : (
-            <div className="space-y-4 text-muted-foreground">
+            <div className="space-y-6">
               {material?.articles.map((article, index) => (
-                <p key={index} className="leading-relaxed">
-                  {article}
-                </p>
+                <div key={index} className="space-y-2">
+                  <h3 className="font-semibold text-lg">{article.title}</h3>
+                  <p className="text-muted-foreground leading-relaxed">
+                    {article.concept}
+                  </p>
+                  <a
+                    href={article.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 text-sm text-primary hover:underline"
+                  >
+                    <LinkIcon className="h-4 w-4" />
+                    Read more
+                  </a>
+                </div>
               ))}
             </div>
           )}
@@ -128,9 +141,17 @@ function JourneySkeleton() {
         <CardHeader>
           <Skeleton className="h-8 w-1/3" />
         </CardHeader>
-        <CardContent className="space-y-2">
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-[80%]" />
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Skeleton className="h-6 w-3/4" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-1/4" />
+          </div>
+          <div className="space-y-2">
+            <Skeleton className="h-6 w-3/4" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-1/4" />
+          </div>
         </CardContent>
       </Card>
       <Card>

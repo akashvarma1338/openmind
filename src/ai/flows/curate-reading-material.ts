@@ -19,7 +19,15 @@ export type CurateReadingMaterialInput = z.infer<typeof CurateReadingMaterialInp
 
 const CurateReadingMaterialOutputSchema = z.object({
   articles: z
-    .array(z.string())
+    .array(
+      z.object({
+        title: z.string().describe('The title of the article or resource.'),
+        concept: z
+          .string()
+          .describe('A brief summary or concept of the reading material.'),
+        link: z.string().url().describe('The URL to the article or resource.'),
+      })
+    )
     .describe('An array of relevant articles and resources for the topic.'),
 });
 
@@ -38,7 +46,7 @@ const prompt = ai.definePrompt({
   Topic: {{{topic}}}
 
   Please provide a list of articles and resources that would be helpful for learning about this topic.
-  Return the articles in markdown format.`,
+  For each resource, provide a title, a short concept summary, and a valid URL.`,
 });
 
 const curateReadingMaterialFlow = ai.defineFlow(
