@@ -19,7 +19,7 @@ import {
   buildMicroQuiz,
   type BuildMicroQuizOutput,
 } from "@/ai/flows/build-micro-quiz";
-import { useUser, useAuth, setDocumentNonBlocking, useFirestore, useDoc, useMemoFirebase, useCollection } from "@/firebase";
+import { useUser, useAuth, setDocumentNonBlocking, useFirestore, useDoc, useMemoFirebase, updateDocumentNonBlocking } from "@/firebase";
 import AuthPage from "@/app/auth/page";
 import { signOut } from "firebase/auth";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -57,6 +57,11 @@ type JourneyState = {
   currentTopic: Topic | null;
 };
 
+type UserProfile = {
+    streak: number;
+    curiosityPoints: number;
+}
+
 export default function Home() {
   const [interests, setInterests] = useState<string[]>([]);
   const [journeyState, setJourneyState] = useState<JourneyState | null>(null);
@@ -73,8 +78,8 @@ export default function Home() {
     if (!user || !firestore) return null;
     return doc(firestore, "users", user.uid);
   }, [user, firestore]);
-  const { data: userProfile } = useDoc<{streak: number}>(userProfileRef);
-  const streak = userProfile?.streak ?? 0;
+  const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
+  const curiosityPoints = userProfile?.curiosityPoints ?? 0;
 
   // This effect handles both starting a new journey and loading the most recent one.
   useEffect(() => {
@@ -87,17 +92,15 @@ export default function Home() {
         localStorage.removeItem('pregeneratedJourneyInterests');
         const pregenInterests = JSON.parse(pregenInterestsJSON);
         if (pregenInterests && pregenInterests.length > 0) {
-            // Force loading state immediately to prevent flash of old content
             setIsLoading(true);
             setJourneyState(null);
-            // This await is critical to ensure the new journey is created before proceeding.
             await handleInterestsSubmit(pregenInterests);
-            return; // Stop execution to prevent loading the old journey
+            return;
         }
       }
 
       // Priority 2: If no new journey was started, load the most recent one.
-      setIsLoading(true); // Set loading before fetching existing journey
+      setIsLoading(true);
       const journeysRef = collection(firestore, "users", user.uid, "learning_journeys");
       const q = query(journeysRef, orderBy("startDate", "desc"), limit(1));
       const querySnapshot = await getDocs(q);
@@ -118,30 +121,25 @@ export default function Home() {
             setJourneyState({ journey: journeyData, currentTopic: null });
         }
       } else {
-        // No journeys exist at all, not even a new one was started
         setJourneyState(null);
       }
       setIsLoading(false);
     };
 
     loadJourney();
-  // We only want this effect to run once when the user is loaded.
-  // handleInterestsSubmit is not included as a dependency to prevent re-triggering.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isUserLoading, user, firestore]);
 
   const startNewJourney = () => {
     setInterests([]);
     setJourneyState(null);
-    setIsLoading(false); // We are ready for the interest form
+    setIsLoading(false);
   };
   
   const handleInterestsSubmit = async (submittedInterests: string[]) => {
     if (!user || !firestore) return;
     
-    // Manage loading state - this is the key to preventing flashes
     setIsLoading(true);
-    setJourneyState(null); // Clear previous journey state to prevent flash
+    setJourneyState(null); 
     setInterests(submittedInterests);
 
     try {
@@ -150,7 +148,6 @@ export default function Home() {
       
       const batch = writeBatch(firestore);
 
-      // Create new journey
       const journeysCollectionRef = collection(firestore, "users", user.uid, "learning_journeys");
       const newJourneyRef = doc(journeysCollectionRef);
       const newJourney: Omit<Journey, 'id'> = {
@@ -161,7 +158,6 @@ export default function Home() {
       };
       batch.set(newJourneyRef, newJourney);
       
-      // Generate content for the first topic
       const material = await curateReadingMaterial({ topic: firstTopicAI.topic, interests: submittedInterests });
       const fullText = material.articles.map(a => `${a.title}\n${a.explanation}`).join("\n\n");
       const quizData = await buildMicroQuiz({
@@ -169,7 +165,6 @@ export default function Home() {
         readingMaterial: fullText,
       });
 
-      // Create first topic
       const newTopicRef = doc(collection(firestore, "users", user.uid, "learning_journeys", newJourneyRef.id, "topics"));
       const newTopic: Omit<Topic, 'id'> = {
           day: 1,
@@ -184,7 +179,6 @@ export default function Home() {
       };
       batch.set(newTopicRef, newTopic);
 
-      // Update journey with topic ID
       batch.update(newJourneyRef, { topicIds: [newTopicRef.id] });
       
       await batch.commit();
@@ -197,7 +191,6 @@ export default function Home() {
     } catch (error) {
       console.error("Failed to generate learning journey:", error);
     } finally {
-      // Only set loading to false after the entire process is complete.
       setIsLoading(false);
     }
   };
@@ -211,7 +204,7 @@ export default function Home() {
       if (!currentTopic || !journey) return;
 
       const nextTopicAI = await generateDailyTopic({
-        interests, // Assuming interests are still in scope or fetched with journey
+        interests,
         journeyTitle: journey.title,
         totalDays: journey.totalDays,
       });
@@ -225,7 +218,6 @@ export default function Home() {
 
       const batch = writeBatch(firestore);
 
-      // Create new topic
       const newTopicRef = doc(collection(firestore, "users", user.uid, "learning_journeys", journey.id, "topics"));
       const newTopic: Omit<Topic, 'id'> = {
           day: currentTopic.day + 1,
@@ -240,14 +232,12 @@ export default function Home() {
       };
       batch.set(newTopicRef, newTopic);
 
-      // Update journey with new topic ID
       const journeyRef = doc(firestore, "users", user.uid, "learning_journeys", journey.id);
       batch.update(journeyRef, { 
           topicIds: [...journey.topicIds, newTopicRef.id],
-          totalDays: nextTopicAI.totalDays // Keep total days consistent
+          totalDays: nextTopicAI.totalDays
       });
 
-      // Update streak
       if (userProfileRef) {
         const newStreak = (userProfile?.streak || 0) + 1;
         batch.update(userProfileRef, { streak: newStreak });
@@ -279,7 +269,7 @@ export default function Home() {
     correctAnswers: number,
     totalQuestions: number
   ) => {
-    if (!firestore || !user || !journeyState || !journeyState.journey || !journeyState.currentTopic) return;
+    if (!firestore || !user || !journeyState || !journeyState.journey || !journeyState.currentTopic || !userProfileRef) return;
     const score = (correctAnswers / totalQuestions) * 100;
     
     if (score >= 80) {
@@ -288,6 +278,10 @@ export default function Home() {
     
     const topicRef = doc(firestore, "users", user.uid, "learning_journeys", journeyState.journey.id, "topics", journeyState.currentTopic.id);
     setDocumentNonBlocking(topicRef, { quizScore: score }, { merge: true });
+    
+    // Update curiosity points
+    const newPoints = (userProfile?.curiosityPoints || 0) + Math.round(score);
+    updateDocumentNonBlocking(userProfileRef, { curiosityPoints: newPoints });
 
     setJourneyState(prev => {
       if (!prev || !prev.currentTopic) return prev;
@@ -403,7 +397,7 @@ export default function Home() {
     <div className="flex flex-col min-h-screen">
       <ConfettiCelebration active={showConfetti} onComplete={() => setShowConfetti(false)} />
       <Header 
-        points={streak} 
+        points={curiosityPoints} 
         onSignOut={handleSignOut} 
         onHomeClick={startNewJourney}
         onHistoryClick={() => setIsHistoryOpen(true)}

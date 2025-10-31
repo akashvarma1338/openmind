@@ -56,7 +56,8 @@ export default function AuthPage() {
                   email: user.email,
                   id: user.uid,
                   streak: 0,
-                  level: 'Beginner'
+                  level: 'Beginner',
+                  curiosityPoints: 0,
               }
               const userDocRef = doc(firestore, "users", user.uid);
               setDocumentNonBlocking(userDocRef, userProfile, { merge: true });

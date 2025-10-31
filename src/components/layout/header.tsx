@@ -1,6 +1,6 @@
 import { Logo } from "@/components/common/icons";
 import { Button } from "../ui/button";
-import { Flame, LogOut, Home, User, BookMarked, History } from "lucide-react";
+import { Flame, LogOut, Home, User, BookMarked, History, Sparkles } from "lucide-react";
 import Link from "next/link";
 import {
   DropdownMenu,
@@ -62,10 +62,17 @@ export function Header({ points, onSignOut, onHomeClick, onHistoryClick }: Heade
                 <User className="h-5 w-5" />
             </Button>
           </Link>
-          <div className="flex items-center gap-2 bg-card border rounded-full px-3 py-1.5 text-sm font-semibold shadow-sm">
-            <Flame className="h-5 w-5 text-orange-500 fill-orange-400" />
-            <span>{points}</span>
-            <span className="hidden sm:inline ml-1">Day Streak</span>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 bg-card border rounded-full px-3 py-1.5 text-sm font-semibold shadow-sm">
+                <Flame className="h-5 w-5 text-orange-500 fill-orange-400" />
+                <span>1</span>
+                <span className="hidden sm:inline ml-1">Day Streak</span>
+            </div>
+            <div className="flex items-center gap-2 bg-card border rounded-full px-3 py-1.5 text-sm font-semibold shadow-sm">
+                <Sparkles className="h-5 w-5 text-yellow-500 fill-yellow-400" />
+                <span>{points}</span>
+                <span className="hidden sm:inline ml-1">Points</span>
+            </div>
           </div>
           <Button variant="ghost" size="icon" onClick={onSignOut} aria-label="Sign out">
             <LogOut className="h-5 w-5" />
