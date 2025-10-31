@@ -87,16 +87,16 @@ export default function Home() {
         localStorage.removeItem('pregeneratedJourneyInterests');
         const pregenInterests = JSON.parse(pregenInterestsJSON);
         if (pregenInterests && pregenInterests.length > 0) {
-            // This is the key fix: set loading true *before* starting the async operation
-            // and clear out any old state to prevent flashing.
+            // Force loading state immediately to prevent flash of old content
             setIsLoading(true);
             setJourneyState(null);
+            // This await is critical to ensure the new journey is created before proceeding.
             await handleInterestsSubmit(pregenInterests);
-            return;
+            return; // Stop execution to prevent loading the old journey
         }
       }
 
-      // Priority 2: If not starting a new journey, load the most recent one.
+      // Priority 2: If no new journey was started, load the most recent one.
       setIsLoading(true); // Set loading before fetching existing journey
       const journeysRef = collection(firestore, "users", user.uid, "learning_journeys");
       const q = query(journeysRef, orderBy("startDate", "desc"), limit(1));
@@ -125,6 +125,9 @@ export default function Home() {
     };
 
     loadJourney();
+  // We only want this effect to run once when the user is loaded.
+  // handleInterestsSubmit is not included as a dependency to prevent re-triggering.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isUserLoading, user, firestore]);
 
   const startNewJourney = () => {
@@ -136,7 +139,7 @@ export default function Home() {
   const handleInterestsSubmit = async (submittedInterests: string[]) => {
     if (!user || !firestore) return;
     
-    // Manage loading state
+    // Manage loading state - this is the key to preventing flashes
     setIsLoading(true);
     setJourneyState(null); // Clear previous journey state to prevent flash
     setInterests(submittedInterests);
@@ -194,6 +197,7 @@ export default function Home() {
     } catch (error) {
       console.error("Failed to generate learning journey:", error);
     } finally {
+      // Only set loading to false after the entire process is complete.
       setIsLoading(false);
     }
   };
