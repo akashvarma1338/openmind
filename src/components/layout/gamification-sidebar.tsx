@@ -27,7 +27,7 @@ type GamificationSidebarProps = {
 
 type LeaderboardUser = {
   rank: number;
-  id: string;
+  userId: string;
   name: string;
   streak: number;
 };
@@ -59,7 +59,7 @@ export function GamificationSidebar({ userStreak, journeyTitle }: GamificationSi
             
             const leaderboardData: LeaderboardUser[] = streaks.map((streakEntry, index) => ({
                 rank: index + 1,
-                id: streakEntry.userId,
+                userId: streakEntry.userId,
                 name: streakEntry.userName || "Anonymous",
                 streak: streakEntry.streak,
             }));
@@ -110,7 +110,7 @@ export function GamificationSidebar({ userStreak, journeyTitle }: GamificationSi
                 ))
             ) : leaderboard.length > 0 ? (
                 leaderboard.map((learner) => (
-                <TableRow key={learner.id} className={learner.id === user?.uid ? 'bg-primary/10' : ''}>
+                <TableRow key={learner.userId} className={learner.userId === user?.uid ? 'bg-primary/10' : ''}>
                     <TableCell className="font-medium">{learner.rank}</TableCell>
                     <TableCell className="font-medium flex items-center gap-2">
                         <Avatar className="h-6 w-6">
