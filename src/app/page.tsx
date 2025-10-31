@@ -24,7 +24,7 @@ import AuthPage from "@/app/auth/page";
 import { signOut } from "firebase/auth";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ArrowRight } from "lucide-react";
-import { collection, doc, Timestamp, query, orderBy, limit, getDocs, serverTimestamp, writeBatch } from "firebase/firestore";
+import { collection, doc, Timestamp, query, orderBy, limit, getDocs, serverTimestamp, writeBatch, increment } from "firebase/firestore";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
 import { JourneyHistorySidebar } from "@/components/layout/journey-history-sidebar";
 import { useToast } from "@/hooks/use-toast";
@@ -59,6 +59,7 @@ type JourneyState = {
 
 type UserProfile = {
     streak: number;
+    curiosityPoints: number;
 }
 
 export default function Home() {
@@ -79,6 +80,7 @@ export default function Home() {
   }, [user, firestore]);
   const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
   const streak = userProfile?.streak ?? 0;
+  const curiosityPoints = userProfile?.curiosityPoints ?? 0;
 
   useEffect(() => {
     if (isUserLoading || !user || !firestore) return;
@@ -288,8 +290,15 @@ export default function Home() {
         setShowConfetti(true);
     }
     
+    const batch = writeBatch(firestore);
+
     const topicRef = doc(firestore, "users", user.uid, "learning_journeys", journeyState.journey.id, "topics", journeyState.currentTopic.id);
-    setDocumentNonBlocking(topicRef, { quizScore: score }, { merge: true });
+    batch.update(topicRef, { quizScore: score });
+
+    const pointsToAdd = correctAnswers * 10;
+    batch.update(userProfileRef, { curiosityPoints: increment(pointsToAdd) });
+
+    batch.commit();
 
     setJourneyState(prev => {
       if (!prev || !prev.currentTopic) return prev;
@@ -406,6 +415,7 @@ export default function Home() {
       <ConfettiCelebration active={showConfetti} onComplete={() => setShowConfetti(false)} />
       <Header 
         streak={streak} 
+        points={curiosityPoints}
         onSignOut={handleSignOut} 
         onHomeClick={startNewJourney}
         onHistoryClick={() => setIsHistoryOpen(true)}

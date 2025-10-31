@@ -67,7 +67,13 @@ export default function ProfilePage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header streak={userProfile?.streak || 0} onSignOut={handleSignOut} onHomeClick={handleHomeClick} onHistoryClick={() => {}} />
+      <Header 
+        streak={userProfile?.streak || 0} 
+        points={userProfile?.curiosityPoints || 0}
+        onSignOut={handleSignOut} 
+        onHomeClick={handleHomeClick} 
+        onHistoryClick={() => {}} 
+      />
       <main className="flex-1 p-4 md:p-8">
         <div className="mx-auto max-w-2xl space-y-8">
             <Card>

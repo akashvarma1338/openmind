@@ -1,6 +1,6 @@
 import { Logo } from "@/components/common/icons";
 import { Button } from "../ui/button";
-import { Flame, LogOut, Home, User, BookMarked, History } from "lucide-react";
+import { Flame, LogOut, Home, User, BookMarked, History, Sparkles } from "lucide-react";
 import Link from "next/link";
 import {
   DropdownMenu,
@@ -14,12 +14,13 @@ import { streams } from "@/lib/pregenerated-courses";
 
 type HeaderProps = {
   streak: number;
+  points: number;
   onSignOut: () => void;
   onHomeClick: () => void;
   onHistoryClick: () => void;
 };
 
-export function Header({ streak, onSignOut, onHomeClick, onHistoryClick }: HeaderProps) {
+export function Header({ streak, points, onSignOut, onHomeClick, onHistoryClick }: HeaderProps) {
   return (
     <header className="sticky top-0 z-10 w-full bg-background/80 backdrop-blur-sm border-b">
       <div className="container mx-auto flex items-center justify-between h-16 px-4">
@@ -67,8 +68,13 @@ export function Header({ streak, onSignOut, onHomeClick, onHistoryClick }: Heade
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 bg-card border rounded-full px-3 py-1.5 text-sm font-semibold shadow-sm">
               <Flame className="h-5 w-5 text-orange-500 fill-orange-400" />
-              <span>{streak}</span>
+              <span>1</span>
               <span className="hidden sm:inline ml-1">Day Streak</span>
+            </div>
+            <div className="flex items-center gap-2 bg-card border rounded-full px-3 py-1.5 text-sm font-semibold shadow-sm">
+                <Sparkles className="h-5 w-5 text-yellow-500 fill-yellow-400" />
+                <span>{points}</span>
+                <span className="hidden sm:inline ml-1">Points</span>
             </div>
           </div>
           <Button variant="ghost" size="icon" onClick={onSignOut} aria-label="Sign out">
