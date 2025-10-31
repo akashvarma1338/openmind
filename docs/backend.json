@@ -1,8 +1,9 @@
+
 {
   "entities": {
-    "User": {
+    "UserProfile": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "User",
+      "title": "UserProfile",
       "type": "object",
       "description": "Represents a user of the Curiosity Engine platform.",
       "properties": {
@@ -10,9 +11,17 @@
           "type": "string",
           "description": "Unique identifier for the user."
         },
-        "username": {
+        "name": {
           "type": "string",
-          "description": "The username of the user."
+          "description": "The name of the user."
+        },
+        "age": {
+            "type": "number",
+            "description": "The age of the user."
+        },
+        "contact": {
+            "type": "string",
+            "description": "The contact number of the user."
         },
         "email": {
           "type": "string",
@@ -23,13 +32,23 @@
           "type": "string",
           "description": "The date and time the user joined the platform.",
           "format": "date-time"
+        },
+        "streak": {
+          "type": "number",
+          "description": "The user's daily activity streak."
+        },
+        "level": {
+          "type": "string",
+          "description": "The user's level (Beginner, Intermediate, Advanced).",
+          "enum": ["Beginner", "Intermediate", "Advanced"]
         }
       },
       "required": [
         "id",
-        "username",
+        "name",
         "email",
-        "joinDate"
+        "streak",
+        "level"
       ]
     }
   },
@@ -44,9 +63,9 @@
       {
         "path": "/users/{userId}",
         "definition": {
-          "entityName": "User",
+          "entityName": "UserProfile",
           "schema": {
-            "$ref": "#/backend/entities/User"
+            "$ref": "#/backend/entities/UserProfile"
           },
           "description": "Stores user profile information. Uses path-based ownership for user data.",
           "params": [

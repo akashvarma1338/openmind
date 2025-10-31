@@ -14,13 +14,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { leaderboardData } from "@/lib/mock-data";
-import { Trophy, Star } from "lucide-react";
+import { Trophy, Star, Award } from "lucide-react";
 
 type GamificationSidebarProps = {
   userPoints: number;
+  userLevel: string;
 };
 
-export function GamificationSidebar({ userPoints }: GamificationSidebarProps) {
+export function GamificationSidebar({ userPoints, userLevel }: GamificationSidebarProps) {
   const updatedLeaderboard = leaderboardData
     .map((user) => (user.name === "You" ? { ...user, points: userPoints } : user))
     .sort((a, b) => b.points - a.points)
@@ -39,6 +40,13 @@ export function GamificationSidebar({ userPoints }: GamificationSidebarProps) {
         <CardDescription>See how you rank among other learners!</CardDescription>
       </CardHeader>
       <CardContent>
+        <div className="mb-6 flex items-center justify-center rounded-lg bg-primary/10 p-4">
+            <Award className="h-8 w-8 text-primary" />
+            <div className="ml-4">
+                <p className="font-semibold text-lg">{userLevel}</p>
+                <p className="text-sm text-muted-foreground">Your current level</p>
+            </div>
+        </div>
         <Table>
           <TableHeader>
             <TableRow>

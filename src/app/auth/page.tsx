@@ -1,23 +1,48 @@
 "use client";
 import { useState } from "react";
 import { AuthForm } from "@/components/auth/auth-form";
-import { useAuth } from "@/firebase";
+import { useAuth, setDocumentNonBlocking } from "@/firebase";
 import {
   initiateEmailSignUp,
   initiateEmailSignIn,
 } from "@/firebase/non-blocking-login";
 import { Logo } from "@/components/common/icons";
+import { getFirestore, doc } from "firebase/firestore";
+
+type AuthData = {
+    email: string;
+    password: any;
+    name?: string;
+    age?: number;
+    contact?: string;
+};
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
   const auth = useAuth();
+  const firestore = getFirestore();
 
-  const handleAuth = (data: { email: string; password: any }) => {
+  const handleAuth = (data: AuthData) => {
     if (!auth) return;
     if (isLogin) {
       initiateEmailSignIn(auth, data.email, data.password);
     } else {
-      initiateEmailSignUp(auth, data.email, data.password);
+      initiateEmailSignUp(auth, data.email, data.password).then((userCredential) => {
+          if (userCredential && userCredential.user) {
+              const user = userCredential.user;
+              const userProfile = {
+                  name: data.name,
+                  age: data.age,
+                  contact: data.contact,
+                  email: user.email,
+                  id: user.uid,
+                  streak: 0,
+                  level: 'Beginner'
+              }
+              const userDocRef = doc(firestore, "users", user.uid);
+              setDocumentNonBlocking(userDocRef, userProfile, { merge: true });
+          }
+      });
     }
   };
 

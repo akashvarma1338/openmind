@@ -18,11 +18,12 @@ import {
   buildMicroQuiz,
   type BuildMicroQuizOutput,
 } from "@/ai/flows/build-micro-quiz";
-import { useUser, useAuth } from "@/firebase";
+import { useUser, useAuth, useDoc, useMemoFirebase, setDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase";
 import AuthPage from "@/app/auth/page";
 import { signOut } from "firebase/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowRight } from "lucide-react";
+import { getFirestore, doc } from "firebase/firestore";
 
 type JourneyState = {
   journeyTitle: string | null;
@@ -34,14 +35,39 @@ type JourneyState = {
   isCompleted: boolean;
 };
 
+type UserProfile = {
+    name: string;
+    age: number;
+    contact: string;
+    email: string;
+    id: string;
+    streak: number;
+    level: 'Beginner' | 'Intermediate' | 'Advanced';
+}
+
 export default function Home() {
   const [interests, setInterests] = useState<string[]>([]);
   const [journeyState, setJourneyState] = useState<JourneyState | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [points, setPoints] = useState(0);
 
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
+  const firestore = getFirestore();
+
+  const userProfileRef = useMemoFirebase(() => {
+    if (firestore && user) {
+        return doc(firestore, "users", user.uid);
+    }
+    return null;
+  }, [firestore, user]);
+
+  const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
+
+  const getLevel = (streak: number) => {
+    if (streak > 10) return 'Advanced';
+    if (streak > 5) return 'Intermediate';
+    return 'Beginner';
+  };
 
   const startNewJourney = () => {
     setInterests([]);
@@ -66,7 +92,7 @@ export default function Home() {
   };
   
   const handleInterestsSubmit = async (submittedInterests: string[]) => {
-    if (isLoading) return;
+    if (isLoading || !userProfile) return;
 
     setIsLoading(true);
     setInterests(submittedInterests);
@@ -74,7 +100,10 @@ export default function Home() {
 
     try {
       const firstTopic = await generateDailyTopic({ interests: submittedInterests });
-      setPoints((p) => p + 10);
+      
+      const newStreak = userProfile.streak + 1;
+      updateDocumentNonBlocking(userProfileRef!, { streak: newStreak, level: getLevel(newStreak) });
+
       setJourneyState({
         journeyTitle: firstTopic.journeyTitle,
         currentTopic: null, // will be set by generateAndSetDailyContent
@@ -94,7 +123,7 @@ export default function Home() {
   };
 
   const advanceToNextDay = async () => {
-    if (!journeyState || !journeyState.journeyTitle || isLoading) return;
+    if (!journeyState || !journeyState.journeyTitle || isLoading || !userProfile) return;
 
     setIsLoading(true);
     try {
@@ -102,7 +131,9 @@ export default function Home() {
         interests,
         journeyTitle: journeyState.journeyTitle,
       });
-      setPoints(p => p + 10); // Points for starting a new day
+      const newStreak = userProfile.streak + 1;
+      updateDocumentNonBlocking(userProfileRef!, { streak: newStreak, level: getLevel(newStreak) });
+      
       setJourneyState(prev => ({
         ...prev!,
         day: prev!.day + 1,
@@ -124,7 +155,7 @@ export default function Home() {
   ) => {
     const score = (correctAnswers / totalQuestions) * 100;
     setJourneyState(prev => ({...prev!, quizScore: score}));
-    setPoints((p) => p + correctAnswers * 5);
+    // Points are now derived from streak
   };
   
   const handleSignOut = async () => {
@@ -133,7 +164,7 @@ export default function Home() {
     }
   };
 
-  if (isUserLoading) {
+  if (isUserLoading || (user && !userProfile)) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-xl">Loading...</div>
@@ -157,6 +188,13 @@ export default function Home() {
     if (journeyState.currentTopic) {
       return (
         <div className="space-y-8">
+          <Card>
+            <CardHeader>
+                <CardTitle className="text-2xl font-bold font-headline">Course Module: {journeyState.journeyTitle}</CardTitle>
+                <CardDescription>Day {journeyState.day} of your learning journey.</CardDescription>
+            </CardHeader>
+          </Card>
+
           <DailyJourneyDisplay
             topic={journeyState.currentTopic}
             material={journeyState.readingMaterial}
@@ -197,6 +235,8 @@ export default function Home() {
 
     return <InterestForm onInterestsSubmit={handleInterestsSubmit} />;
   }
+  
+  const points = (userProfile?.streak || 0) * 10;
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -207,7 +247,7 @@ export default function Home() {
             {renderJourneyContent()}
           </div>
           <div className="lg:col-span-1 space-y-8 mt-8 lg:mt-0">
-            <GamificationSidebar userPoints={points} />
+            <GamificationSidebar userPoints={points} userLevel={userProfile?.level || 'Beginner'} />
           </div>
         </div>
       </main>

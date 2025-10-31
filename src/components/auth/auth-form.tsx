@@ -16,25 +16,35 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { LogIn } from "lucide-react";
 
-const formSchema = z.object({
+const authSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
   password: z
     .string()
     .min(6, { message: "Password must be at least 6 characters long." }),
 });
 
+const registerSchema = authSchema.extend({
+    name: z.string().min(2, { message: "Please enter your name." }),
+    age: z.coerce.number().min(1, { message: "Please enter your age." }),
+    contact: z.string().min(10, { message: "Please enter a valid contact number." }),
+});
+
+
 type AuthFormProps = {
   isLogin: boolean;
-  onSubmit: (values: z.infer<typeof formSchema>) => void;
+  onSubmit: (values: z.infer<typeof authSchema> | z.infer<typeof registerSchema>) => void;
   setIsLogin: (isLogin: boolean) => void;
 };
 
 export function AuthForm({ isLogin, onSubmit, setIsLogin }: AuthFormProps) {
+  const formSchema = isLogin ? authSchema : registerSchema;
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       email: "",
       password: "",
+      ...(isLogin ? {} : { name: "", age: "" , contact: "" }),
     },
   });
 
@@ -43,6 +53,49 @@ export function AuthForm({ isLogin, onSubmit, setIsLogin }: AuthFormProps) {
       <CardContent className="p-6">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            {!isLogin && (
+                <>
+                <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Name</FormLabel>
+                        <FormControl>
+                        <Input placeholder="John Doe" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+                 <FormField
+                    control={form.control}
+                    name="age"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Age</FormLabel>
+                        <FormControl>
+                        <Input type="number" placeholder="25" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+                 <FormField
+                    control={form.control}
+                    name="contact"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Contact Number</FormLabel>
+                        <FormControl>
+                        <Input placeholder="+1234567890" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+                </>
+            )}
             <FormField
               control={form.control}
               name="email"
