@@ -3,6 +3,7 @@ export type Subject = {
   name: string;
   description: string;
   imageHint: string;
+  duration: string; // e.g., "Approx. 30 days"
 };
 
 export type Stream = {
@@ -22,25 +23,29 @@ export const streams: Stream[] = [
         id: 'data-structures-and-algorithms',
         name: 'Data Structures & Algorithms',
         description: 'Master the building blocks of efficient software. Learn about arrays, linked lists, trees, graphs, and essential algorithms.',
-        imageHint: 'abstract data network'
+        imageHint: 'abstract data network',
+        duration: 'Approx. 45 days'
       },
       {
         id: 'operating-systems',
         name: 'Operating Systems',
         description: 'Understand how computer hardware and software interact. Dive into processes, memory management, and file systems.',
-        imageHint: 'computer motherboard circuit'
+        imageHint: 'computer motherboard circuit',
+        duration: 'Approx. 25 days'
       },
       {
         id: 'database-management-systems',
         name: 'Database Management Systems',
         description: 'Learn to design, query, and manage databases. Explore SQL, normalization, and data modeling.',
-        imageHint: 'database server room'
+        imageHint: 'database server room',
+        duration: 'Approx. 20 days'
       },
       {
         id: 'artificial-intelligence',
         name: 'Artificial Intelligence',
         description: 'Discover the fundamentals of AI, including machine learning, neural networks, and natural language processing.',
-        imageHint: 'artificial intelligence brain'
+        imageHint: 'artificial intelligence brain',
+        duration: 'Approx. 30 days'
       },
     ],
   },
@@ -53,25 +58,29 @@ export const streams: Stream[] = [
             id: 'analog-electronics',
             name: 'Analog Electronics',
             description: 'Explore the fundamentals of electronic circuits, including transistors, amplifiers, and op-amps.',
-            imageHint: 'electronic circuit board'
+            imageHint: 'electronic circuit board',
+            duration: 'Approx. 25 days'
         },
         {
             id: 'digital-logic-design',
             name: 'Digital Logic Design',
             description: 'Learn the principles of digital systems, including logic gates, flip-flops, and state machines.',
-            imageHint: 'digital circuit logic'
+            imageHint: 'digital circuit logic',
+            duration: 'Approx. 20 days'
         },
         {
             id: 'signals-and-systems',
             name: 'Signals and Systems',
             description: 'Understand the mathematical foundation for analyzing signals and the systems that process them.',
-            imageHint: 'abstract signal wave'
+            imageHint: 'abstract signal wave',
+            duration: 'Approx. 30 days'
         },
         {
             id: 'communication-systems',
             name: 'Communication Systems',
             description: 'Discover how information is transmitted and received, from analog modulation to modern digital communication.',
-            imageHint: 'communication satellite network'
+            imageHint: 'communication satellite network',
+            duration: 'Approx. 25 days'
         }
     ],
   },
@@ -84,25 +93,29 @@ export const streams: Stream[] = [
         id: 'electric-circuits',
         name: 'Electric Circuits',
         description: 'Analyze DC and AC circuits, network theorems, and transient analysis.',
-        imageHint: 'glowing electrical circuit'
+        imageHint: 'glowing electrical circuit',
+        duration: 'Approx. 20 days'
       },
       {
         id: 'power-systems',
         name: 'Power Systems',
         description: 'Learn about power generation, transmission, distribution, and protection.',
-        imageHint: 'high voltage power lines'
+        imageHint: 'high voltage power lines',
+        duration: 'Approx. 30 days'
       },
       {
         id: 'control-systems',
         name: 'Control Systems',
         description: 'Study the modeling of systems, time-domain and frequency-domain analysis, and controller design.',
-        imageHint: 'industrial control panel'
+        imageHint: 'industrial control panel',
+        duration: 'Approx. 25 days'
       },
       {
         id: 'electrical-machines',
         name: 'Electrical Machines',
         description: 'Understand the principles of transformers, DC motors, and AC machines.',
-        imageHint: 'electric motor internals'
+        imageHint: 'electric motor internals',
+        duration: 'Approx. 25 days'
       },
     ],
   },
@@ -115,25 +128,29 @@ export const streams: Stream[] = [
         id: 'thermodynamics',
         name: 'Thermodynamics',
         description: 'Study the laws of energy conversion, heat transfer, and properties of substances.',
-        imageHint: 'engine diagram gears'
+        imageHint: 'engine diagram gears',
+        duration: 'Approx. 25 days'
       },
       {
         id: 'fluid-mechanics',
         name: 'Fluid Mechanics',
         description: 'Analyze fluid statics, dynamics, and the principles of flow in pipes and channels.',
-        imageHint: 'water fluid dynamics'
+        imageHint: 'water fluid dynamics',
+        duration: 'Approx. 20 days'
       },
       {
         id: 'strength-of-materials',
         name: 'Strength of Materials',
         description: 'Learn about stress, strain, and deformation in solid materials under various loads.',
-        imageHint: 'bridge steel structure'
+        imageHint: 'bridge steel structure',
+        duration: 'Approx. 20 days'
       },
       {
         id: 'machine-design',
         name: 'Machine Design',
         description: 'Apply engineering principles to design and analyze machine components.',
-        imageHint: 'robotic arm blueprint'
+        imageHint: 'robotic arm blueprint',
+        duration: 'Approx. 30 days'
       },
     ],
   },
@@ -146,25 +163,29 @@ export const streams: Stream[] = [
         id: 'principles-of-management',
         name: 'Principles of Management',
         description: 'Learn the core functions of management: planning, organizing, leading, and controlling.',
-        imageHint: 'business people meeting'
+        imageHint: 'business people meeting',
+        duration: 'Approx. 15 days'
       },
       {
         id: 'financial-accounting',
         name: 'Financial Accounting',
         description: 'Understand how to record, summarize, and report financial transactions.',
-        imageHint: 'accounting ledger calculator'
+        imageHint: 'accounting ledger calculator',
+        duration: 'Approx. 20 days'
       },
       {
         id: 'marketing-management',
         name: 'Marketing Management',
         description: 'Explore strategies for product pricing, promotion, and distribution to meet customer needs.',
-        imageHint: 'shopping cart marketing'
+        imageHint: 'shopping cart marketing',
+        duration: 'Approx. 15 days'
       },
       {
         id: 'business-law',
         name: 'Business Law',
         description: 'Grasp the legal framework governing business activities, including contracts and corporate law.',
-        imageHint: 'law gavel books'
+        imageHint: 'law gavel books',
+        duration: 'Approx. 20 days'
       },
     ],
   },
@@ -177,25 +198,29 @@ export const streams: Stream[] = [
         id: 'strategic-management',
         name: 'Strategic Management',
         description: 'Learn to formulate and implement strategies to achieve a competitive advantage.',
-        imageHint: 'chess strategy board'
+        imageHint: 'chess strategy board',
+        duration: 'Approx. 25 days'
       },
       {
         id: 'corporate-finance',
         name: 'Corporate Finance',
         description: 'Master investment analysis, capital budgeting, and financial risk management.',
-        imageHint: 'stock market graph'
+        imageHint: 'stock market graph',
+        duration: 'Approx. 30 days'
       },
       {
         id: 'operations-management',
         name: 'Operations Management',
         description: 'Analyze and optimize the processes used to produce and deliver goods and services.',
-        imageHint: 'factory assembly line'
+        imageHint: 'factory assembly line',
+        duration: 'Approx. 25 days'
       },
       {
         id: 'global-business-strategy',
         name: 'Global Business Strategy',
         description: 'Understand the challenges and opportunities of operating in a globalized market.',
-        imageHint: 'world map connections'
+        imageHint: 'world map connections',
+        duration: 'Approx. 20 days'
       },
     ],
   },

@@ -35,6 +35,7 @@ type Journey = {
   title: string;
   startDate: Timestamp;
   topicIds: string[];
+  totalDays: number;
 };
 
 type Topic = {
@@ -169,6 +170,7 @@ export default function Home() {
         title: firstTopicAI.journeyTitle,
         startDate: Timestamp.now(),
         topicIds: [],
+        totalDays: firstTopicAI.totalDays,
       };
       batch.set(newJourneyRef, newJourney);
       
@@ -261,7 +263,10 @@ export default function Home() {
 
       // Update journey with new topic ID
       const journeyRef = doc(firestore, "users", user.uid, "learning_journeys", journey.id);
-      batch.update(journeyRef, { topicIds: [...journey.topicIds, newTopicRef.id] });
+      batch.update(journeyRef, { 
+          topicIds: [...journey.topicIds, newTopicRef.id],
+          totalDays: nextTopicAI.totalDays // Keep total days consistent
+      });
 
       // Update streak
       const currentStreak = userStreakDoc?.streak || 0;
@@ -290,7 +295,7 @@ export default function Home() {
       setJourneyState(prev => {
         if (!prev || !prev.journey) return prev;
         return {
-          journey: { ...prev.journey, topicIds: [...prev.journey.topicIds, newTopicRef.id]},
+          journey: { ...prev.journey, topicIds: [...prev.journey.topicIds, newTopicRef.id], totalDays: nextTopicAI.totalDays},
           currentTopic: { ...newTopic, id: newTopicRef.id },
         }
       });
@@ -374,6 +379,7 @@ export default function Home() {
           journeyTitle: journey.title,
           isFirstDay: day === 1,
           isLastDay,
+          totalDays: journey.totalDays,
       }
 
       return (
@@ -381,7 +387,7 @@ export default function Home() {
           <Card>
             <CardHeader>
                 <CardTitle className="text-2xl font-bold font-headline">Course Module: {journey.title}</CardTitle>
-                <CardDescription>Day {day} of your learning journey.</CardDescription>
+                <CardDescription>Day {day} of {journey.totalDays} in your learning journey.</CardDescription>
             </CardHeader>
           </Card>
 

@@ -4,7 +4,7 @@ import { useParams } from 'next/navigation';
 import { streams } from '@/lib/pregenerated-courses';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Clock } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Header } from '@/components/layout/header';
@@ -33,7 +33,7 @@ export default function StreamPage() {
     if (!stream) {
         return (
             <div className="flex flex-col min-h-screen">
-                <Header streak={0} onSignOut={handleSignOut} onHomeClick={handleHomeClick} />
+                <Header streak={0} onSignOut={handleSignOut} onHomeClick={handleHomeClick} onHistoryClick={() => {}} />
                 <main className="flex-1 p-4 md:p-8 flex items-center justify-center">
                     <p>Stream not found.</p>
                 </main>
@@ -43,7 +43,7 @@ export default function StreamPage() {
 
     return (
         <div className="flex flex-col min-h-screen">
-            <Header streak={0} onSignOut={handleSignOut} onHomeClick={handleHomeClick} />
+            <Header streak={0} onSignOut={handleSignOut} onHomeClick={handleHomeClick} onHistoryClick={() => router.push('/')} />
             <main className="flex-1 p-4 md:p-8">
                 <div className="max-w-4xl mx-auto space-y-8">
                     <div className="text-center space-y-2">
@@ -69,6 +69,10 @@ export default function StreamPage() {
                                     <CardDescription className="flex-grow">{subject.description}</CardDescription>
                                 </CardHeader>
                                 <CardContent className="mt-auto">
+                                     <div className="flex items-center text-muted-foreground text-sm mb-4">
+                                        <Clock className="mr-2 h-4 w-4" />
+                                        <span>{subject.duration}</span>
+                                    </div>
                                     <Link href={`/courses/${stream.id}/${subject.id}`} passHref>
                                         <Button className="w-full">
                                             Start Learning <ArrowRight className="ml-2" />

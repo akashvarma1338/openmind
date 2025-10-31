@@ -26,6 +26,7 @@ const GenerateDailyTopicOutputSchema = z.object({
   journeyTitle: z.string().describe('The title of the learning journey this topic belongs to.'),
   isFirstDay: z.boolean().describe('Whether this is the first topic in the journey.'),
   isLastDay: z.boolean().describe('Whether this is the last topic in the journey.'),
+  totalDays: z.number().int().describe('The total number of days in the generated learning journey.'),
 });
 export type GenerateDailyTopicOutput = z.infer<typeof GenerateDailyTopicOutputSchema>;
 
@@ -37,7 +38,7 @@ const prompt = ai.definePrompt({
   name: 'generateDailyTopicPrompt',
   input: {schema: GenerateDailyTopicInputSchema},
   output: {schema: GenerateDailyTopicOutputSchema},
-  prompt: `You are an AI learning companion. You are great at creating structured, open-ended learning journeys that can span many days.
+  prompt: `You are an AI learning companion. You are great at creating structured, yet engaging learning journeys.
 
   User Interests:
   {{#each interests}}- {{this}}\n{{/each}}
@@ -46,18 +47,22 @@ const prompt = ai.definePrompt({
   The user is continuing their learning journey on "{{journeyTitle}}". Generate the next logical topic in this journey.
   The topic should build on previous knowledge but be digestible in a single day.
   Mark "isFirstDay" as false. If you feel this is the final topic to conclude the journey, mark "isLastDay" as true.
+  The "totalDays" should remain consistent with the previously established journey length.
   {{else}}
-  This is the start of a new journey. Generate a broad, engaging title for a learning journey based on the user's interests. The title should be open-ended and MUST NOT mention a specific duration (e.g., absolutely no phrases like "in 5 days", "in a week", etc.).
-  Then, generate the very first daily learning topic for Day 1 of this new journey.
-  Mark "isFirstDay" as true and "isLastDay" as false.
-  {{/if}}
+  This is the start of a new journey. First, determine a realistic and appropriate length for a learning journey based on the user's interests. A simple topic might be 7-10 days, while a complex one like "Data Structures" could be 30 or more.
   
-  For the generated topic, provide:
+  Then, create a broad, engaging title for this learning journey. The title MUST NOT mention a specific duration (e.g., no "in X days").
+  
+  Finally, generate the very first daily learning topic for Day 1 of this new journey.
+
+  You must provide:
   1. "topic": A relevant and engaging daily learning topic.
   2. "reason": An explanation for why this topic was selected.
   3. "journeyTitle": The title for the overall learning journey.
-  4. "isFirstDay": A boolean indicating if this is the first day.
-  5. "isLastDay": A boolean indicating if this is the last day.
+  4. "isFirstDay": A boolean indicating if this is the first day (should be true).
+  5. "isLastDay": A boolean indicating if this is the last day (should be false unless it's a 1-day journey).
+  6. "totalDays": The total number of days you have planned for this entire journey.
+  {{/if}}
   `,
 });
 
