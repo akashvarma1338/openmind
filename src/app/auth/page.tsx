@@ -41,6 +41,8 @@ export default function AuthPage() {
               }
               const userDocRef = doc(firestore, "users", user.uid);
               setDocumentNonBlocking(userDocRef, userProfile, { merge: true });
+              // Switch to login view after successful signup
+              setIsLogin(true); 
           }
       });
     }
