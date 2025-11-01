@@ -56,7 +56,10 @@ export default function LeaderboardPage() {
         isUser: true,
     };
     
-    const combinedData = [...leaderboardData.filter(d => d.name !== currentUserData.name), currentUserData];
+    // Make sure we are not duplicating the current user if they are also in the mock data
+    const otherUsers = leaderboardData.filter(d => d.name.toLowerCase() !== currentUserData.name.toLowerCase());
+    
+    const combinedData = [...otherUsers, currentUserData];
     const sortedData = combinedData.sort((a, b) => b.points - a.points);
     return sortedData.map((entry, index) => ({ ...entry, rank: index + 1 }));
 
@@ -92,7 +95,7 @@ export default function LeaderboardPage() {
   const getRankIndicator = (rank: number) => {
     if (rank === 1) return <Crown className="h-5 w-5 text-yellow-400" />;
     if (rank === 2) return <Medal className="h-5 w-5 text-slate-400" />;
-    if (rank === 3) return <Medal className="h-5 w-5 text-yellow-600" />;
+    if (rank === 3) return <Trophy className="h-5 w-5 text-yellow-600" />;
     return <span className="font-mono text-sm">{rank}</span>;
   }
 
@@ -107,7 +110,7 @@ export default function LeaderboardPage() {
   return (
     <div className="flex flex-col min-h-screen">
       <Header 
-        streak={1} 
+        streak={userProfile?.streak || 0}
         points={userProfile?.curiosityPoints || 0}
         onSignOut={handleSignOut} 
         onHomeClick={handleHomeClick} 
